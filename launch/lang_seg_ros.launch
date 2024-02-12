@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <arg name="input" default="/camera/color/image_raw_throttle"/>
+    <arg name="output" default="/lseg/pred"/>
+    <arg name="weights" default="/home/zacravi/projects/foundation-models/lang-seg/checkpoints/demo_e200.ckpt"/>
+
+    <node pkg="image_transport" type="republish"  name="uncompress"
+    args="compressed in:=$(arg input) raw out:=$(arg input)">
+        <!-- <remap from="/image/compressed" to="$(arg input)"/> -->
+    </node>
+
+    <node pkg="lang_seg_ros" type="infer.py" name="lang_seg_ros" output="screen">
+        <param name="input" value="$(arg input)"/>
+        <param name="output" value="$(arg output)"/>
+        <param name="weights" value="$(arg weights)"/>
+    </node>
+</launch>
