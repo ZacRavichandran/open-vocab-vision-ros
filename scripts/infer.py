@@ -49,7 +49,6 @@ class LangSegInferRos:
         # an intermediate container
         while True:
             if not self.img_queue.empty():
-                rospy.loginfo(self.img_queue.qsize())
                 img = self.img_queue.get(block=False)
                 self.segment(img)
                 rospy.sleep(1e-3)
