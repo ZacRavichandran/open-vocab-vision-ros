@@ -44,11 +44,13 @@ class LangSegInferRos:
         )
         self.img_pub = rospy.Publisher(pub_topic, Image, queue_size=1)
 
+        # ROS will drop incoming messages if subscriber is full. It would
+        # be prefereable to drop old messages, so we'll use a queue as
+        # an intermediate container
         while True:
             if not self.img_queue.empty():
                 rospy.loginfo(self.img_queue.qsize())
                 img = self.img_queue.get(block=False)
-                print(img.header.stamp)
                 self.segment(img)
                 rospy.sleep(1e-3)
 
@@ -70,7 +72,7 @@ class LangSegInferRos:
 
     def segment(self, img_msg: Image) -> None:
         img = decode_img_msg(img_msg)
-        img = cv2.resize(img, (0, 0), fx=0.5, fy=0.5)
+        # img = cv2.resize(img, (0, 0), fx=0.5, fy=0.5)
 
         t1 = time.time()
         pred = self.lseg_infer.infer(img, in_color=False)
