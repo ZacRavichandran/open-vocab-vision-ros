@@ -4,3 +4,4 @@ ROS wrapper for running [language-driven semantic segmentation](https://arxiv.or
 
 ## Requirements
 * install [lang-seg](https://github.com/ZacRavichandran/lang-seg)
+* download [checkpoint](https://drive.google.com/file/d/1ayk6NXURI_vIPlym16f_RG3ffxBWHxvb/view?usp=sharing)
