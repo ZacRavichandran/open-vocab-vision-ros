@@ -8,7 +8,10 @@ import cv2
 import cv_bridge
 import queue
 
-from lseg.inference import LangSegInference, decode_img_msg, get_result_plot
+try:
+    from lseg.inference import LangSegInference, decode_img_msg, get_result_plot
+except ImportError:
+    raise ValueError("must install lseg")
 
 
 class LangSegInferRos:

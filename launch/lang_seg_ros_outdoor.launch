@@ -12,7 +12,7 @@
         args="compressed in:=$(arg input) raw out:=$(arg input)">
     </node>
 
-    <node pkg="lang_seg_ros" type="infer.py" name="lang_seg_ros" output="screen">
+    <node pkg="lang_seg_ros" type="lseg_infer.py" name="lang_seg_ros" output="screen">
         <param name="input" value="$(arg input)"/>
         <param name="output" value="$(arg output)"/>
         <param name="weights" value="$(arg weights)"/>

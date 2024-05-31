@@ -2,17 +2,17 @@
 
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
-    <arg name="output" default="/lseg/pred"/>
-    <arg name="weights" default="/home/zacravi/projects/foundation-models/lang-seg/checkpoints/demo_e200.ckpt"/>
+    <arg name="output" default="/yolo/pred"/>
+    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
     <arg name="labels" 
-    default="foor,wall,ground,ceiling,chair,window,desk,table,laptop,printer,person,robot,door,curtain,monitor,garbage can,fence,storage,other"/>
+    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can"/>
 
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
     </node>
 
-    <node pkg="lang_seg_ros" type="lseg_infer.py" name="lang_seg_ros" output="screen">
+    <node pkg="lang_seg_ros" type="yolo_infer.py" name="yolo_ros" output="screen">
         <param name="input" value="$(arg input)"/>
         <param name="output" value="$(arg output)"/>
         <param name="weights" value="$(arg weights)"/>
