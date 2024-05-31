@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
-    <arg name="input" default="/camera/color/image_raw_throttle"/>
+    <arg name="input" default="/camera/color/image_raw"/>
     <arg name="output" default="/lseg/pred"/>
-    <arg name="weights" default="/home/zacravi/projects/foundation-models/lang-seg/checkpoints/demo_e200.ckpt"/>
+    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/demo_e200.ckpt"/>
     <arg name="drop" default="true"/>
-    <arg name="labels" 
-    default="road,grass,building,sky,door,car,person,fence,gate,tree,chair,table,robot,other"/>
+    <arg name="labels"  
+        default="gravel,road,bench,garbage bin,grass,building,sky,door,car,person,bush,fence,gate,tree,chair,table,robot,sign,sidewalk,other"/>
+
 
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
