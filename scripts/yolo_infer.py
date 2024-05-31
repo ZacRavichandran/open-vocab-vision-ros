@@ -82,12 +82,12 @@ class LangSegInferRos:
         # self.debug_pub = rospy.Publisher("~debug", Image, queue_size=1)
 
         # ROS will drop incoming messages if subscriber is full. It would
-        # be prefereable to drop old messages, so we'll use a queue as
+        # be preferable to drop old messages, so we'll use a queue as
         # an intermediate container
         while True:
             if not self.img_queue.empty():
                 img = self.img_queue.get(block=False)
-                self.segment(img)
+                self.detect(img)
                 rospy.sleep(1e-3)
 
         rospy.spin()  # can remove
@@ -106,22 +106,11 @@ class LangSegInferRos:
 
         self.img_queue.put(img_msg)
 
-    def segment(self, img_msg: Image) -> None:
+    def detect(self, img_msg: Image) -> None:
         img = decode_img_msg(img_msg)
-
-        # doesn't seem to work as well on smaller images
-        # resizing = False
-        if img.shape[0] < 500:
-            img = cv2.resize(img, (0, 0), fx=2, fy=2)
-            resizing = True
-
-        print(img.dtype, img.max(), img.min())
 
         t1 = time.time()
         pred = self.yolo_infer.predict(img)
-
-        # if resizing:
-        #     pred = pred[..., ::2, ::2]
 
         rospy.loginfo(f"lseg inference on ({img.shape}) img: {time.time() - t1:0.3f}s")
 
@@ -133,6 +122,12 @@ class LangSegInferRos:
         color_msg.encoding = "rgb8"
 
         self.img_pub.publish(color_msg)
+
+        boxes = pred[0].boxes.xyxy.cpu().numpy()
+        classes = pred[0].boxes.cls.cpu().numpy()
+
+        for box, class_id in zip(boxes, classes):
+            pass
 
         # if self.debug:
         #     fig, ax, plot = get_result_plot(img, pred_color, patches)
