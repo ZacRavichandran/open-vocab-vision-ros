@@ -1,35 +1,69 @@
 #!/usr/bin/env python
-import rospy
-from sensor_msgs.msg import Image
-import numpy as np
-
+import queue
 import time
+from typing import Tuple, Union
+
 import cv2
 import cv_bridge
-import queue
-
-from typing import Union
-from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
+import numpy as np
+import pyrealsense2 as rs2
+import rospy
+from geometry_msgs.msg import Point, Quaternion
 from rosbags.typesys.types import sensor_msgs__msg__CompressedImage as CompressedImgMsg
+from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
+from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import Header
+from vision_msgs.msg import Detection2D, ObjectHypothesisWithPose
 
 try:
     from ultralytics import YOLO
 except ImportError:
-    raise ValueError("must install lseg")
+    raise ValueError("must install ultralytics")
 
 
 def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
+    """Decode ROS image message.
+
+    This implements functionality of cv_bridge (was having issues with some
+    depencies. This was the simplest solution).
+
+    Parameters
+    ----------
+    msg : Union[ImageMsg, CompressedImgMsg]
+        Incoming ROS image message.
+
+    Returns
+    -------
+    np.ndarray
+        Decoded image as numpy array.
+
+    Raises
+    ------
+    ValueError
+        Raises error if image encoding is not implemented.
+    """
     if "Compressed" in str(type(msg)):  # better way?
         np_arr = np.fromstring(msg.data, np.uint8)
         img = cv2.imdecode(np_arr, cv2.IMREAD_UNCHANGED)
         print(img.shape)
     else:
-        assert msg.encoding == "rgb8", "other values not supported"
-        img = np.copy(
-            np.ndarray(
-                shape=(msg.height, msg.width, 3), dtype=np.uint8, buffer=msg.data
+        if msg.encoding == "rgb8":
+            img = np.copy(
+                np.ndarray(
+                    shape=(msg.height, msg.width, 3), dtype=np.uint8, buffer=msg.data
+                )
             )
-        )
+        elif msg.encoding == "16UC1":
+            # with open("/home/zac/test_img.txt", "wb") as f:
+            #     f.write(msg.data)
+            dtype = np.dtype("uint16")
+            dtype = dtype.newbyteorder(">" if msg.is_bigendian else "<")
+            img = np.ndarray(
+                shape=(msg.height, msg.width), dtype=dtype, buffer=msg.data
+            )
+
+        else:
+            raise ValueError(f"{msg.encoding} not supported")
     return img
 
 
@@ -50,7 +84,14 @@ class LangSegInferRos:
     ]
 
     def __init__(self):
-        sub_topic = rospy.get_param("~input", "/camera/color/image_raw")
+        # read parameters
+        color_sub_topic = rospy.get_param("~input", "/camera/color/image_raw")
+        depth_info_sub_topic = rospy.get_param(
+            "~depth_aligned_info", "/camera/aligned_depth_to_color/camera_info"
+        )
+        depth_sub_topic = rospy.get_param(
+            "~depth_aligned_img", "/camera/aligned_depth_to_color/image_raw"
+        )
         pub_topic = rospy.get_param("~output", "~pred")
         weights = rospy.get_param(
             "~weights",
@@ -60,8 +101,9 @@ class LangSegInferRos:
         self.target_frame = rospy.get_param(
             "~target_frame", "camera_color_optical_frame"
         )
-
         self.labels = rospy.get_param("~labels", "")
+
+        # setup class members
         if self.labels != "":
             self.labels = self.labels.split(",")
         else:
@@ -75,11 +117,24 @@ class LangSegInferRos:
         self.yolo_infer.set_classes(self.labels)
         rospy.loginfo("yololoaded.")
 
+        self.intrinsics = None
+        self.last_depth = None
+
+        # setup subscribers
         self.img_sub = rospy.Subscriber(
-            sub_topic, Image, self.img_callback, queue_size=1
+            color_sub_topic, Image, self.img_callback, queue_size=1
         )
+        self.depth_sub = rospy.Subscriber(depth_sub_topic, Image, self.depth_callback)
+        self.depth_info_sub = rospy.Subscriber(
+            depth_info_sub_topic,
+            CameraInfo,
+            self.depth_info_callback,
+        )
+
+        # setup publishers
         self.img_pub = rospy.Publisher(pub_topic, Image, queue_size=1)
-        # self.debug_pub = rospy.Publisher("~debug", Image, queue_size=1)
+        self.debug_pub = rospy.Publisher("~debug", Image, queue_size=1)
+        self.detection_pub = rospy.Publisher("~detections", Detection2D, queue_size=1)
 
         # ROS will drop incoming messages if subscriber is full. It would
         # be preferable to drop old messages, so we'll use a queue as
@@ -89,8 +144,6 @@ class LangSegInferRos:
                 img = self.img_queue.get(block=False)
                 self.detect(img)
                 rospy.sleep(1e-3)
-
-        rospy.spin()  # can remove
 
     def img_callback(self, img_msg: Image) -> None:
         """If `self.drop_old_msg` is true, empty the queue before
@@ -106,16 +159,36 @@ class LangSegInferRos:
 
         self.img_queue.put(img_msg)
 
+    def depth_callback(self, depth_msg: Image) -> None:
+        self.last_depth = depth_msg
+
+    def depth_info_callback(self, camera_info: CameraInfo) -> None:
+        # from rs2 / show_center_depth.py
+        try:
+            if self.intrinsics:
+                return
+            self.intrinsics = rs2.intrinsics()
+            self.intrinsics.width = camera_info.width
+            self.intrinsics.height = camera_info.height
+            self.intrinsics.ppx = camera_info.K[2]
+            self.intrinsics.ppy = camera_info.K[5]
+            self.intrinsics.fx = camera_info.K[0]
+            self.intrinsics.fy = camera_info.K[4]
+            if camera_info.distortion_model == "plumb_bob":
+                self.intrinsics.model = rs2.distortion.brown_conrady
+            elif camera_info.distortion_model == "equidistant":
+                self.intrinsics.model = rs2.distortion.kannala_brandt4
+            self.intrinsics.coeffs = [i for i in camera_info.D]
+
+        except cv_bridge.CvBridgeError as e:
+            print(e)
+            return
+
     def detect(self, img_msg: Image) -> None:
         img = decode_img_msg(img_msg)
-
-        t1 = time.time()
         pred = self.yolo_infer.predict(img)
 
-        rospy.loginfo(f"lseg inference on ({img.shape}) img: {time.time() - t1:0.3f}s")
-
         pred_color = pred[0].plot()
-
         color_msg = self.bridge.cv2_to_imgmsg(pred_color, encoding="passthrough")
         color_msg.header = img_msg.header  # TODO do we want this?
         color_msg.header.frame_id = self.target_frame  # TODO bit of a hack
@@ -124,17 +197,65 @@ class LangSegInferRos:
         self.img_pub.publish(color_msg)
 
         boxes = pred[0].boxes.xyxy.cpu().numpy()
-        classes = pred[0].boxes.cls.cpu().numpy()
+        classes = pred[0].boxes.cls.cpu().numpy().astype(np.int16)
+        confidences = pred[0].boxes.conf.cpu().numpy()
 
-        for box, class_id in zip(boxes, classes):
-            pass
+        for box, class_id, conf in zip(boxes, classes, confidences):
+            x, y, z = self.deproject_detections(box[::2].mean(), box[1::2].mean())
+            self.publish_detection_msg(
+                class_id=class_id,
+                confidence=conf,
+                pose=(x, y, z),
+                header=img_msg.header,
+            )
 
-        # if self.debug:
-        #     fig, ax, plot = get_result_plot(img, pred_color, patches)
-        #     debug_msg = self.bridge.cv2_to_imgmsg(plot, encoding="passthrough")
-        #     debug_msg.header = img_msg.header
-        #     debug_msg.encoding = "rgb8"
-        #     self.debug_pub.publish(debug_msg)
+    def publish_detection_msg(
+        self,
+        class_id: int,
+        confidence: float,
+        pose: Tuple[float, float, float],
+        header: Header,
+    ) -> None:
+        object_msgs = []
+        object_msg = ObjectHypothesisWithPose()
+        object_msg.id = class_id
+        object_msg.score = confidence
+        object_msg.pose.pose.position = Point(x=pose[0], y=pose[1], z=pose[2])
+        object_msg.pose.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
+        object_msgs.append(object_msg)
+        detection_msg = Detection2D()
+        detection_msg.header = header
+        detection_msg.results = object_msgs
+
+        self.detection_pub.publish(detection_msg)
+
+    def deproject_detections(self, x: float, y: float) -> Tuple[float, float, float]:
+        if self.last_depth == None or self.intrinsics == None:
+            return
+
+        # depth is given in mm. We convert that to meters
+        depth_img = decode_img_msg(self.last_depth)
+        depth_img = depth_img / 1000
+
+        int_x, int_y = np.int16(x), np.int16(y)
+        depth_point = depth_img[int_y, int_x]
+
+        result_camera_coords = rs2.rs2_deproject_pixel_to_point(
+            self.intrinsics, (int_y, int_x), depth_point
+        )
+        x = result_camera_coords[2]
+        y = -result_camera_coords[0]
+        z = -result_camera_coords[1]
+
+        return x, y, z
+
+        # for debugging
+        # depth_msg = self.bridge.cv2_to_imgmsg(depth_img, encoding="passthrough")
+        # depth_msg.header = self.last_depth.header  # TODO do we want this?
+        # depth_msg.header.frame_id = self.target_frame  # TODO bit of a hack
+        # depth_msg.encoding = self.last_depth.encoding
+
+        # self.debug_pub.publish(depth_msg)
 
 
 if __name__ == "__main__":
