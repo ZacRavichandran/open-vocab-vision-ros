@@ -21,8 +21,9 @@ class DetectionVizNode:
         )
 
         self.marker_pub = rospy.Publisher("~detection_viz", Marker, queue_size=10)
-        self.count = 0
-        self.max_msgs = 1000
+        # hack to not interfere with tracks
+        self.count = 1000
+        self.max_msgs = 2000
 
     def track_cbk(self, track_msg: Detection2D) -> None:
         pass
@@ -47,7 +48,7 @@ class DetectionVizNode:
         self.marker_pub.publish(marker_msg)
 
         if self.count > self.max_msgs:
-            self.count = 0
+            self.count = 1000
 
 
 if __name__ == "__main__":

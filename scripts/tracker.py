@@ -68,7 +68,8 @@ class HypothesisSet:
     def __init__(self) -> None:
         # TODO make efficient
         self.hypotheses = []
-        self.dist_threshold = 3
+        self.dist_threshold = 1
+        self.depth_threshold = 10
 
     def add_hypothesis(
         self, time: float, class_id: int, score: float, pose: np.ndarray
@@ -84,6 +85,14 @@ class HypothesisSet:
         n_hypothesis: int,
         frame: str,
     ) -> bool:
+        # don't consider if distance is too far
+        # TODO hack to assume map frame is dist from sensor
+        if np.linalg.norm(pose) > self.depth_threshold:
+            return False
+
+        if np.linalg.norm(pose) > 5:
+            print(f"detection is far: {np.linalg.norm(pose)}")
+
         # find best fit pose
         added_hypothesis = False
         min_hypothesis_dist = np.inf
@@ -185,29 +194,52 @@ class TrackerNode:
 
         self.track_viz = rospy.Publisher("~viz", Marker, queue_size=1)
 
+        self.labels = rospy.get_param("~labels", "")
+
+        if self.labels != "":
+            self.labels = self.labels.split(",")
+
+    def get_marker_msg(self, idx, frame, time, position):
+        marker_msg = Marker()
+        marker_msg.id = idx
+        marker_msg.header.frame_id = frame
+        marker_msg.header.stamp.secs = np.int32(time // 1)
+        marker_msg.header.stamp.nsecs = np.int32(time % 1 * 1e9 // 1)
+        marker_msg.pose.position = Point(x=position[0], y=position[1], z=position[2])
+        marker_msg.pose.orientation.w = 1
+
+        marker_msg.color = ColorRGBA(r=1, g=0.75, b=0, a=1)
+        marker_msg.scale.x = 0.5
+        marker_msg.scale.y = 0.5
+        marker_msg.scale.z = 0.5
+        marker_msg.action = marker_msg.ADD
+        marker_msg.type = marker_msg.SPHERE
+        return marker_msg
+
     def pub_tracks(self):
         tracks = self.tracker.get_tracks()
 
         # lots of duplicate code here
         for track in tracks:
-            marker_msg = Marker()
-            marker_msg.id = track.idx
-            marker_msg.header.frame_id = track.frame
-            marker_msg.header.stamp.secs = np.int32(track.time // 1)
-            marker_msg.header.stamp.nsecs = np.int32(track.time % 1 * 1e9 // 1)
-            marker_msg.pose.position = Point(
-                x=track.pose[0], y=track.pose[1], z=track.pose[2]
+            marker_msg = self.get_marker_msg(
+                idx=2 * track.idx,
+                frame=track.frame,
+                time=track.time,
+                position=track.pose,
             )
-            marker_msg.pose.orientation.w = 1
-
-            marker_msg.color = ColorRGBA(r=255, g=165, b=0, a=1)
-            marker_msg.scale.x = 0.5
-            marker_msg.scale.y = 0.5
-            marker_msg.scale.z = 0.5
-            marker_msg.action = marker_msg.ADD
-            marker_msg.type = marker_msg.SPHERE
-
             self.track_viz.publish(marker_msg)
+
+            if self.labels != "":
+                text_msg = self.get_marker_msg(
+                    idx=2 * track.idx + 1,
+                    frame=track.frame,
+                    time=track.time,
+                    position=track.pose + np.array([0, 0, 0.5]),
+                )
+                text_msg.type = marker_msg.TEXT_VIEW_FACING
+                text_msg.text = self.labels[track.class_id]
+                text_msg.color = ColorRGBA(r=0.9, g=0.9, b=0.9, a=1)
+                self.track_viz.publish(text_msg)
 
         # also need to publish tracks as detection2d msgs
 

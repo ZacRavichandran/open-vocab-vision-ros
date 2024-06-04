@@ -142,6 +142,8 @@ class LangSegInferRos:
         # ROS will drop incoming messages if subscriber is full. It would
         # be preferable to drop old messages, so we'll use a queue as
         # an intermediate container
+
+        # TODO still an issue where queue is read too fast
         while True:
             if not self.img_queue.empty():
                 if self.img_queue.qsize():
@@ -202,10 +204,17 @@ class LangSegInferRos:
         boxes = pred[0].boxes.xyxy.cpu().numpy()
         classes = pred[0].boxes.cls.cpu().numpy().astype(np.int16)
         confidences = pred[0].boxes.conf.cpu().numpy()
+        assert (
+            img_msg.header.frame_id == "camera_color_optical_frame"
+        ), f" img frame: {img_msg.header.frame_id}"
 
         for box, class_id, conf in zip(boxes, classes, confidences):
             x, y, z = self.deproject_detections(
-                box[::2].mean(), box[1::2].mean(), w=box[2] - box[0], h=box[3] - box[1]
+                box[::2].mean(),
+                box[1::2].mean(),
+                w=box[2] - box[0],
+                h=box[3] - box[1],
+                time=img_msg.header.stamp,
             )
             self.publish_detection_msg(
                 class_id=class_id,
@@ -236,7 +245,7 @@ class LangSegInferRos:
         self.detection_pub.publish(detection_msg)
 
     def deproject_detections(
-        self, x: float, y: float, w: float, h: float
+        self, x: float, y: float, w: float, h: float, time: float
     ) -> Tuple[float, float, float]:
         if self.last_depth == None or self.intrinsics == None:
             return
@@ -257,14 +266,13 @@ class LangSegInferRos:
         depth_point = depth_point.mean()
 
         result_camera_coords = rs2.rs2_deproject_pixel_to_point(
-            self.intrinsics, (int_y, int_x), depth_point
+            self.intrinsics, (int_x, int_y), depth_point
         )
 
         result_camera_coords = np.array(result_camera_coords)
 
-        # transform_msg = self.tf_buffer.lookup_transform(self.target_frame, 'camera_color_optical_frame', rospy.Time())
         transform_msg = self.tf_buffer.lookup_transform(
-            "camera_color_optical_frame", self.target_frame, rospy.Time()
+            self.target_frame, "camera_color_optical_frame", rospy.Time()
         )
 
         transform = transform_msg.transform
@@ -283,31 +291,12 @@ class LangSegInferRos:
 
         result_map = rot.as_matrix() @ result_camera_coords + trans
 
-        print(f"transform: {transform.translation}, {rot.as_euler('xyz')}")
-        # print(result_map)
-
-        x = -1 * result_map[1]
-        y = result_map[0]
-        z = -1 * result_map[2]
-
-        # x = result_camera_coords[0]
-        # y = result_camera_coords[2]
-        # z = result_camera_coords[1]
-
-        # orig
-        # x = result_camera_coords[2]
-        # y = -result_camera_coords[0]
-        # z = -result_camera_coords[1]
+        x = result_map[0]
+        y = result_map[1]
+        z = result_map[2]
 
         return x, y, z
 
-        # for debugging
-        # depth_msg = self.bridge.cv2_to_imgmsg(depth_img, encoding="passthrough")
-        # depth_msg.header = self.last_depth.header  # TODO do we want this?
-        # depth_msg.header.frame_id = self.target_frame  # TODO bit of a hack
-        # depth_msg.encoding = self.last_depth.encoding
-
-        # self.debug_pub.publish(depth_msg)
 
 
 if __name__ == "__main__":
