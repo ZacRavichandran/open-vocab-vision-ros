@@ -5,8 +5,10 @@
     <arg name="output" default="/yolo/pred"/>
     <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
+    <arg name="confidence" default="0.3"/>
     <arg name="labels" 
-    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can"/>
+	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,
+	    television,monitor,desk,traffic cone,table,box,package,machine,plant"/>
 
     <arg name="viz" default="true"/>
 
@@ -20,6 +22,7 @@
         <param name="weights" value="$(arg weights)"/>
         <param name="drop" value="$(arg drop)"/>
         <param name="labels" value="$(arg labels)"/>
+	<param name="confidence" value="$(arg confidence)"/>
     </node>
 
     <node pkg="lang_seg_ros" type="viz_detections.py" name="viz_detections" output="screen"/>

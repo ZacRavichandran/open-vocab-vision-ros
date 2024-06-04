@@ -69,7 +69,7 @@ class HypothesisSet:
         # TODO make efficient
         self.hypotheses = []
         self.dist_threshold = 1
-        self.depth_threshold = 10
+        self.depth_threshold = 7.5
 
     def add_hypothesis(
         self, time: float, class_id: int, score: float, pose: np.ndarray
@@ -85,14 +85,6 @@ class HypothesisSet:
         n_hypothesis: int,
         frame: str,
     ) -> bool:
-        # don't consider if distance is too far
-        # TODO hack to assume map frame is dist from sensor
-        if np.linalg.norm(pose) > self.depth_threshold:
-            return False
-
-        if np.linalg.norm(pose) > 5:
-            print(f"detection is far: {np.linalg.norm(pose)}")
-
         # find best fit pose
         added_hypothesis = False
         min_hypothesis_dist = np.inf

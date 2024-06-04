@@ -102,10 +102,14 @@ class LangSegInferRos:
         self.debug = rospy.get_param("~debug", True)
         self.target_frame = rospy.get_param("~target_frame", "map")
         self.labels = rospy.get_param("~labels", "")
+        self.confidence_thresh = rospy.get_param("~confidence", 0.5)
+        self.depth_threshold = rospy.get_param("~depth_threshold", 7.5)
+
 
         # setup class members
         if self.labels != "":
             self.labels = self.labels.split(",")
+            self.labels = [l.strip() for l in self.labels]
         else:
             self.labels = self.DEFAULT_LABELS
         rospy.loginfo(f"using labels: {self.labels}")
@@ -209,13 +213,21 @@ class LangSegInferRos:
         ), f" img frame: {img_msg.header.frame_id}"
 
         for box, class_id, conf in zip(boxes, classes, confidences):
-            x, y, z = self.deproject_detections(
+            if conf < self.confidence_thresh: 
+                continue 
+
+            (x, y, z), depth_point = self.deproject_detections(
                 box[::2].mean(),
                 box[1::2].mean(),
                 w=box[2] - box[0],
                 h=box[3] - box[1],
                 time=img_msg.header.stamp,
             )
+
+            # don't publish detections far from camera
+            if depth_point > self.depth_threshold:
+                continue 
+
             self.publish_detection_msg(
                 class_id=class_id,
                 confidence=conf,
@@ -295,7 +307,7 @@ class LangSegInferRos:
         y = result_map[1]
         z = result_map[2]
 
-        return x, y, z
+        return (x, y, z), depth_point
 
 
 
