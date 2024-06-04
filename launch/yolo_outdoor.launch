@@ -8,6 +8,8 @@
     <arg name="labels" 
     default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can"/>
 
+    <arg name="viz" default="true"/>
+
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
     </node>
@@ -19,4 +21,6 @@
         <param name="drop" value="$(arg drop)"/>
         <param name="labels" value="$(arg labels)"/>
     </node>
+
+    <node pkg="lang_seg_ros" type="viz_detections.py" name="viz_detections" output="screen"/>
 </launch>

@@ -25,7 +25,7 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
     """Decode ROS image message.
 
     This implements functionality of cv_bridge (was having issues with some
-    depencies. This was the simplest solution).
+    dependencies. This was the simplest solution).
 
     Parameters
     ----------
