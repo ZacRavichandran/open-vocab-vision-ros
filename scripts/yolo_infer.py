@@ -8,9 +8,11 @@ import cv_bridge
 import numpy as np
 import pyrealsense2 as rs2
 import rospy
+import tf2_ros
 from geometry_msgs.msg import Point, Quaternion
 from rosbags.typesys.types import sensor_msgs__msg__CompressedImage as CompressedImgMsg
 from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
+from scipy.spatial.transform import Rotation
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import Header
 from vision_msgs.msg import Detection2D, ObjectHypothesisWithPose
@@ -98,9 +100,7 @@ class LangSegInferRos:
         )
         self.drop_old_msg = rospy.get_param("~drop", True)
         self.debug = rospy.get_param("~debug", True)
-        self.target_frame = rospy.get_param(
-            "~target_frame", "camera_color_optical_frame"
-        )
+        self.target_frame = rospy.get_param("~target_frame", "map")
         self.labels = rospy.get_param("~labels", "")
 
         # setup class members
@@ -119,6 +119,9 @@ class LangSegInferRos:
 
         self.intrinsics = None
         self.last_depth = None
+
+        self.tf_buffer = tf2_ros.Buffer()
+        self.listener = tf2_ros.TransformListener(self.tf_buffer)
 
         # setup subscribers
         self.img_sub = rospy.Subscriber(
@@ -141,9 +144,10 @@ class LangSegInferRos:
         # an intermediate container
         while True:
             if not self.img_queue.empty():
-                img = self.img_queue.get(block=False)
-                self.detect(img)
-                rospy.sleep(1e-3)
+                if self.img_queue.qsize():
+                    img = self.img_queue.get(block=True)
+                    self.detect(img)
+                    rospy.sleep(1e-3)
 
     def img_callback(self, img_msg: Image) -> None:
         """If `self.drop_old_msg` is true, empty the queue before
@@ -191,7 +195,6 @@ class LangSegInferRos:
         pred_color = pred[0].plot()
         color_msg = self.bridge.cv2_to_imgmsg(pred_color, encoding="passthrough")
         color_msg.header = img_msg.header  # TODO do we want this?
-        color_msg.header.frame_id = self.target_frame  # TODO bit of a hack
         color_msg.encoding = "rgb8"
 
         self.img_pub.publish(color_msg)
@@ -227,6 +230,7 @@ class LangSegInferRos:
         object_msgs.append(object_msg)
         detection_msg = Detection2D()
         detection_msg.header = header
+        detection_msg.header.frame_id = self.target_frame  # TODO yes?
         detection_msg.results = object_msgs
 
         self.detection_pub.publish(detection_msg)
@@ -255,12 +259,45 @@ class LangSegInferRos:
         result_camera_coords = rs2.rs2_deproject_pixel_to_point(
             self.intrinsics, (int_y, int_x), depth_point
         )
-        x = result_camera_coords[2]
+
+        result_camera_coords = np.array(result_camera_coords)
+
+        # transform_msg = self.tf_buffer.lookup_transform(self.target_frame, 'camera_color_optical_frame', rospy.Time())
+        transform_msg = self.tf_buffer.lookup_transform(
+            "camera_color_optical_frame", self.target_frame, rospy.Time()
+        )
+
+        transform = transform_msg.transform
+
+        rot = Rotation.from_quat(
+            [
+                transform.rotation.x,
+                transform.rotation.y,
+                transform.rotation.z,
+                transform.rotation.w,
+            ]
+        )
+        trans = np.array(
+            [transform.translation.x, transform.translation.y, transform.translation.z]
+        )
+
+        result_map = rot.as_matrix() @ result_camera_coords + trans
+
+        print(f"transform: {transform.translation}, {rot.as_euler('xyz')}")
+        # print(result_map)
+
+        x = -1 * result_map[1]
+        y = result_map[0]
+        z = -1 * result_map[2]
+
+        # x = result_camera_coords[0]
+        # y = result_camera_coords[2]
+        # z = result_camera_coords[1]
+
+        # orig
+        # x = result_camera_coords[2]
         # y = -result_camera_coords[0]
         # z = -result_camera_coords[1]
-
-        z = -result_camera_coords[0]
-        y = -result_camera_coords[1]
 
         return x, y, z
 

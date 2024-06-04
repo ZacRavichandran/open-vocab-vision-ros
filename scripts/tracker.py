@@ -1,14 +1,12 @@
 #!/usr/bin/env python
-import rospy
-
 from collections import defaultdict
 
+import numpy as np
+import rospy
+from geometry_msgs.msg import Point
+from std_msgs.msg import ColorRGBA
 from vision_msgs.msg import Detection2D
 from visualization_msgs.msg import Marker
-from std_msgs.msg import ColorRGBA
-from geometry_msgs.msg import Point
-
-import numpy as np
 
 
 class Hypothesis:
@@ -203,9 +201,9 @@ class TrackerNode:
             marker_msg.pose.orientation.w = 1
 
             marker_msg.color = ColorRGBA(r=255, g=165, b=0, a=1)
-            marker_msg.scale.x = 1
-            marker_msg.scale.y = 1
-            marker_msg.scale.z = 1
+            marker_msg.scale.x = 0.5
+            marker_msg.scale.y = 0.5
+            marker_msg.scale.z = 0.5
             marker_msg.action = marker_msg.ADD
             marker_msg.type = marker_msg.SPHERE
 
@@ -214,6 +212,7 @@ class TrackerNode:
         # also need to publish tracks as detection2d msgs
 
     def detection_cbk(self, detection_msg: Detection2D) -> None:
+
         pose = detection_msg.results[0].pose.pose.position
         pose = np.array([pose.x, pose.y, pose.z])
         class_id = detection_msg.results[0].id
@@ -228,7 +227,7 @@ class TrackerNode:
             pose=pose,
             frame=detection_msg.header.frame_id,
         )
-        self.tracker.print_status()
+        # self.tracker.print_status()
 
         self.pub_tracks()
 

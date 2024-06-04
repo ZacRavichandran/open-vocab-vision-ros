@@ -38,9 +38,9 @@ class DetectionVizNode:
         marker_msg.pose.orientation = detection_msg.results[0].pose.pose.orientation
 
         marker_msg.color = self.WHITE_COLOR
-        marker_msg.scale.x = 0.5
-        marker_msg.scale.y = 0.5
-        marker_msg.scale.z = 0.5
+        marker_msg.scale.x = 0.25
+        marker_msg.scale.y = 0.25
+        marker_msg.scale.z = 0.25
         marker_msg.action = marker_msg.ADD
         marker_msg.type = marker_msg.SPHERE
 
