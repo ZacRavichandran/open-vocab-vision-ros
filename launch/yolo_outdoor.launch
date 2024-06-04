@@ -23,4 +23,6 @@
     </node>
 
     <node pkg="lang_seg_ros" type="viz_detections.py" name="viz_detections" output="screen"/>
+    
+    <node pkg="lang_seg_ros" type="tracker.py" name="tracker_node" output="screen"/>
 </launch>

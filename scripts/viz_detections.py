@@ -19,9 +19,13 @@ class DetectionVizNode:
         self.detection_sub = rospy.Subscriber(
             detection_topic, Detection2D, self.detection_cbk
         )
+
         self.marker_pub = rospy.Publisher("~detection_viz", Marker, queue_size=10)
         self.count = 0
         self.max_msgs = 1000
+
+    def track_cbk(self, track_msg: Detection2D) -> None:
+        pass
 
     def detection_cbk(self, detection_msg: Detection2D) -> None:
         # assume each message has one object :w

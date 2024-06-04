@@ -201,7 +201,9 @@ class LangSegInferRos:
         confidences = pred[0].boxes.conf.cpu().numpy()
 
         for box, class_id, conf in zip(boxes, classes, confidences):
-            x, y, z = self.deproject_detections(box[::2].mean(), box[1::2].mean())
+            x, y, z = self.deproject_detections(
+                box[::2].mean(), box[1::2].mean(), w=box[2] - box[0], h=box[3] - box[1]
+            )
             self.publish_detection_msg(
                 class_id=class_id,
                 confidence=conf,
@@ -229,7 +231,9 @@ class LangSegInferRos:
 
         self.detection_pub.publish(detection_msg)
 
-    def deproject_detections(self, x: float, y: float) -> Tuple[float, float, float]:
+    def deproject_detections(
+        self, x: float, y: float, w: float, h: float
+    ) -> Tuple[float, float, float]:
         if self.last_depth == None or self.intrinsics == None:
             return
 
@@ -238,14 +242,25 @@ class LangSegInferRos:
         depth_img = depth_img / 1000
 
         int_x, int_y = np.int16(x), np.int16(y)
-        depth_point = depth_img[int_y, int_x]
+
+        # take 10% crop around box to reduce noise
+        w = np.maximum(w * 0.1, 2).astype(np.int32)
+        h = np.maximum(h * 0.1, 2).astype(np.int32)
+
+        depth_point = depth_img[
+            int_y - h // 2 : int_y + h // 2, int_x - w // 2 : int_x + w // 2
+        ]
+        depth_point = depth_point.mean()
 
         result_camera_coords = rs2.rs2_deproject_pixel_to_point(
             self.intrinsics, (int_y, int_x), depth_point
         )
         x = result_camera_coords[2]
-        y = -result_camera_coords[0]
-        z = -result_camera_coords[1]
+        # y = -result_camera_coords[0]
+        # z = -result_camera_coords[1]
+
+        z = -result_camera_coords[0]
+        y = -result_camera_coords[1]
 
         return x, y, z
 

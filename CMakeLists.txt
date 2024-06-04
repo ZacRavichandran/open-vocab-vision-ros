@@ -12,6 +12,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/lseg_infer.py
   scripts/yolo_infer.py
+  scripts/tracker.py
   scripts/viz_detections.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
