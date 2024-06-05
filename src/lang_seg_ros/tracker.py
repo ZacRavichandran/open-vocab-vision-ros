@@ -1,8 +1,8 @@
 from collections import defaultdict
+from typing import List
 
 import numpy as np
 
-import numpy as np
 
 class Hypothesis:
     """hypothesis for single object"""
@@ -15,18 +15,20 @@ class Hypothesis:
         score: float,
         idx: int,
         frame: str,
+        label: str = "",
     ) -> None:
         self.n_detections = 0
         self.class_id = class_id
         self.pose = pose
         self.time = time
         self.score = score
+        # TODO this will get expensive
         self.poses = [pose]
         self.idx = idx
         self.frame = frame
         self.velocity = np.zeros(3)
         self.history_weight = 0.95
-        print(f"\n\nadding hypothesis: {self.idx}\n\n")
+        self.label = label
 
     def update_pose(self, incoming_pose: np.ndarray) -> np.ndarray:
         return (
@@ -46,7 +48,7 @@ class Hypothesis:
         self.score = score
         self.n_detections += 1
 
-    def compute_vel(self, history=25):
+    def compute_vel(self, history: int = 25):
         pose_history = np.array(self.poses)[-history:]
         filter = np.ones(5) / 5
         filtered_pose = np.stack(
@@ -57,6 +59,17 @@ class Hypothesis:
         cov = np.cov(filtered_pose.T)
         avg_vel = (filtered_pose[-1:] - filtered_pose[1:]).mean(0)
         return avg_vel, cov
+
+    def is_same(self, incoming_hypothesis, pos_tol: float = 1) -> bool:
+        return (
+            self.idx == incoming_hypothesis.idx
+            and self.class_id == incoming_hypothesis.class_id
+            and np.linalg.norm(self.pose - incoming_hypothesis.pose) < pos_tol
+        )
+
+    def __str__(self):
+        print_pose = ", ".join([f"{v:0.2f}" for v in self.pose])
+        return f"Track(idx={self.idx}, label={self.label}, id={self.class_id}, pose=({print_pose})"
 
 
 class HypothesisSet:
@@ -79,6 +92,7 @@ class HypothesisSet:
         pose: np.ndarray,
         n_hypothesis: int,
         frame: str,
+        label: str = "",
     ) -> bool:
         # find best fit pose
         added_hypothesis = False
@@ -103,6 +117,7 @@ class HypothesisSet:
                     score=score,
                     idx=n_hypothesis,
                     frame=frame,
+                    label=label,
                 )
             )
             added_hypothesis = True
@@ -115,7 +130,6 @@ class HypothesisSet:
             print_avg_vel = ", ".join([f"{v:0.2f}" for v in hypothesis.velocity])
 
             vel, cov = hypothesis.compute_vel()
-
             print_vel = ", ".join([f"{v:0.2f}" for v in vel])
             print_cov = ", ".join([f"{v:0.2f}" for v in cov[np.diag_indices(3)]])
             det_cov = np.linalg.det(cov)
@@ -129,7 +143,7 @@ class HypothesisSet:
 
 class Tracker:
     def __init__(self, distance_threshold: float = 1) -> None:
-        class _HypothesisSet(HypothesisSet):
+        class _HypothesisSet(HypothesisSet):  # TODO is there a better way to to this?
             def __init__(self) -> None:
                 super().__init__(distance_threshold)
 
@@ -140,7 +154,13 @@ class Tracker:
         self.hypothesis_idx = 0
 
     def add_detection(
-        self, time: float, class_id: int, score: float, pose: np.ndarray, frame: str
+        self,
+        time: float,
+        class_id: int,
+        score: float,
+        pose: np.ndarray,
+        frame: str,
+        label: str = "",
     ) -> None:
         added = self.hypotheses[class_id].add_detection(
             time=time,
@@ -149,11 +169,21 @@ class Tracker:
             pose=pose,
             frame=frame,
             n_hypothesis=self.hypothesis_idx,
+            label=label,
         )
         if added:
             self.hypothesis_idx += 1
 
-    def get_tracks(self):
+    def get_tracks(self) -> List[Hypothesis]:
+        """Get tracks. A hypothesis is considered a track
+        if it as at least `n_trash_thresh` detections associated
+        with it
+
+        Returns
+        -------
+        List[Hypothesis]
+            Hypothesis that are now considered tracks.
+        """
         tracks = []
         # sets are organized by class. go through each class set
         for hypothesis_set in self.hypotheses.values():
@@ -164,7 +194,6 @@ class Tracker:
 
         return tracks
 
-    def print_status(self):
+    def print_status(self) -> None:
         for hypothesis_set in self.hypotheses.values():
             hypothesis_set.print_status()
-

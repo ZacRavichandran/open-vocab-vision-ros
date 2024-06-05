@@ -8,16 +8,19 @@
     <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
     <arg name="labels" 
-    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,
-    boat,cabin,truck,building"/>
+    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,boat,cabin,truck,building"/>
 
     <arg name="target_frame" default="world"/>
     <arg name="source_frame" default="husky/camera"/>
-
-    <arg name="depth_threshold" default="25"/>
-    <arg name="distance_threshold" default="5"/>
-
     <arg name="viz" default="true"/>
+
+    <!-- don't consider detections farther than this -->
+    <arg name="depth_threshold" default="25"/>
+
+    <!-- cluster detections within this threshold into same object-->
+    <arg name="distance_threshold" default="5"/>
+    <!-- sleep call between detections -->
+    <arg name="detect_period" default="0.001"/>
 
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
@@ -35,6 +38,7 @@
         <param name="labels" value="$(arg labels)"/>
         <param name="depth_scale" value="1"/>
         <param name="depth_threshold" value="$(arg depth_threshold)"/>
+        <param name="detect_period" value="$(arg detect_period)"/>
     </node>
 
     <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">

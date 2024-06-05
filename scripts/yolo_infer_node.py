@@ -123,6 +123,8 @@ class LangSegInferRos:
         self.depth_threshold = rospy.get_param("~depth_threshold", 7.5)
         self.depth_scale = rospy.get_param("~depth_scale", 1000)
 
+        self.detect_period = rospy.get_param("~detect_period", 1e-3)
+
         # setup class members
         if self.labels != "":
             self.labels = self.labels.split(",")
@@ -136,7 +138,7 @@ class LangSegInferRos:
 
         self.yolo_infer = YOLO(weights)
         self.yolo_infer.set_classes(self.labels)
-        rospy.loginfo("yololoaded.")
+        rospy.loginfo("yolo loaded.")
 
         self.intrinsics = None
         self.last_depth = None
@@ -175,7 +177,7 @@ class LangSegInferRos:
                 if self.img_queue.qsize():
                     img = self.img_queue.get(block=True)
                     self.detect(img)
-                    rospy.sleep(1e-3)
+                    rospy.sleep(self.detect_period)
 
     def img_callback(self, img_msg: Image) -> None:
         """If `self.drop_old_msg` is true, empty the queue before

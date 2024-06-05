@@ -1,17 +1,32 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(lang_seg_ros)
 
-find_package(catkin REQUIRED
+find_package(catkin REQUIRED COMPONENTS
 rospy
-)
-
-catkin_package(
+message_generation
+geometry_msgs
+std_msgs
 )
 
 include_directories(
 )
 
+add_message_files(
+  FILES 
+  Track.msg
+)
+
 catkin_python_setup()
+
+generate_messages(
+  DEPENDENCIES 
+  std_msgs
+  geometry_msgs
+)
+
+catkin_package(CATKIN_DEPENDS 
+message_runtime
+)
 
 catkin_install_python(PROGRAMS
   scripts/lseg_infer.py
