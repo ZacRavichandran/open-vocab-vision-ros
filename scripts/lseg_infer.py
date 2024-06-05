@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-import rospy
-from sensor_msgs.msg import Image
-import numpy as np
-
+import queue
 import time
+
 import cv2
 import cv_bridge
-import queue
+import numpy as np
+import rospy
+from sensor_msgs.msg import Image
 
 try:
     from lseg.inference import LangSegInference, decode_img_msg, get_result_plot

@@ -10,12 +10,14 @@ import pyrealsense2 as rs2
 import rospy
 import tf2_ros
 from geometry_msgs.msg import Point, Quaternion
+from lang_seg_ros.viz_utils import create_marker_msg
 from rosbags.typesys.types import sensor_msgs__msg__CompressedImage as CompressedImgMsg
 from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
 from scipy.spatial.transform import Rotation
 from sensor_msgs.msg import CameraInfo, Image
-from std_msgs.msg import Header
+from std_msgs.msg import ColorRGBA, Header
 from vision_msgs.msg import Detection2D, ObjectHypothesisWithPose
+from visualization_msgs.msg import Marker
 
 try:
     from ultralytics import YOLO
@@ -55,9 +57,20 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
                     shape=(msg.height, msg.width, 3), dtype=np.uint8, buffer=msg.data
                 )
             )
+        elif msg.encoding == "rgba8":
+            img = np.copy(
+                np.ndarray(
+                    shape=(msg.height, msg.width, 4), dtype=np.uint8, buffer=msg.data
+                )
+            )
+            img = img[..., :3]
+        elif msg.encoding == "32FC1":
+            dtype = np.dtype("float32")
+            dtype = dtype.newbyteorder(">" if msg.is_bigendian else "<")
+            img = np.ndarray(
+                shape=(msg.height, msg.width), dtype=dtype, buffer=msg.data
+            ).copy()
         elif msg.encoding == "16UC1":
-            # with open("/home/zac/test_img.txt", "wb") as f:
-            #     f.write(msg.data)
             dtype = np.dtype("uint16")
             dtype = dtype.newbyteorder(">" if msg.is_bigendian else "<")
             img = np.ndarray(
@@ -101,10 +114,14 @@ class LangSegInferRos:
         self.drop_old_msg = rospy.get_param("~drop", True)
         self.debug = rospy.get_param("~debug", True)
         self.target_frame = rospy.get_param("~target_frame", "map")
+        self.source_frame = rospy.get_param(
+            "~source_frame", "camera_color_optical_frame"
+        )
+
         self.labels = rospy.get_param("~labels", "")
         self.confidence_thresh = rospy.get_param("~confidence", 0.5)
         self.depth_threshold = rospy.get_param("~depth_threshold", 7.5)
-
+        self.depth_scale = rospy.get_param("~depth_scale", 1000)
 
         # setup class members
         if self.labels != "":
@@ -142,6 +159,11 @@ class LangSegInferRos:
         self.img_pub = rospy.Publisher(pub_topic, Image, queue_size=1)
         self.debug_pub = rospy.Publisher("~debug", Image, queue_size=1)
         self.detection_pub = rospy.Publisher("~detections", Detection2D, queue_size=1)
+
+        # for visualization
+        self.viz_pub = rospy.Publisher("~detections_viz", Marker, queue_size=10)
+        self.marker_count = 1000  # deconflict from tracks
+        self.max_marker_count = 2000
 
         # ROS will drop incoming messages if subscriber is full. It would
         # be preferable to drop old messages, so we'll use a queue as
@@ -208,13 +230,10 @@ class LangSegInferRos:
         boxes = pred[0].boxes.xyxy.cpu().numpy()
         classes = pred[0].boxes.cls.cpu().numpy().astype(np.int16)
         confidences = pred[0].boxes.conf.cpu().numpy()
-        assert (
-            img_msg.header.frame_id == "camera_color_optical_frame"
-        ), f" img frame: {img_msg.header.frame_id}"
 
         for box, class_id, conf in zip(boxes, classes, confidences):
-            if conf < self.confidence_thresh: 
-                continue 
+            if conf < self.confidence_thresh:
+                continue
 
             (x, y, z), depth_point = self.deproject_detections(
                 box[::2].mean(),
@@ -226,7 +245,7 @@ class LangSegInferRos:
 
             # don't publish detections far from camera
             if depth_point > self.depth_threshold:
-                continue 
+                continue
 
             self.publish_detection_msg(
                 class_id=class_id,
@@ -234,6 +253,22 @@ class LangSegInferRos:
                 pose=(x, y, z),
                 header=img_msg.header,
             )
+
+            self.publish_detection_marker(header=img_msg.header, position=(x, y, z))
+
+    def publish_detection_marker(self, header: Header, position: np.ndarray) -> None:
+        marker_msg = create_marker_msg(
+            id=self.marker_count,
+            header=header,
+            position=(position[0], position[1], position[2]),
+            scale=0.25,
+            color=ColorRGBA(r=0.75, g=0.75, b=0.75, a=1),
+        )
+        self.viz_pub.publish(marker_msg)
+
+        self.marker_count += 1
+        if self.marker_count > self.max_marker_count:
+            self.marker_count = 1000
 
     def publish_detection_msg(
         self,
@@ -264,7 +299,7 @@ class LangSegInferRos:
 
         # depth is given in mm. We convert that to meters
         depth_img = decode_img_msg(self.last_depth)
-        depth_img = depth_img / 1000
+        depth_img = depth_img / self.depth_scale
 
         int_x, int_y = np.int16(x), np.int16(y)
 
@@ -284,7 +319,7 @@ class LangSegInferRos:
         result_camera_coords = np.array(result_camera_coords)
 
         transform_msg = self.tf_buffer.lookup_transform(
-            self.target_frame, "camera_color_optical_frame", rospy.Time()
+            self.target_frame, self.source_frame, rospy.Time()
         )
 
         transform = transform_msg.transform
@@ -308,7 +343,6 @@ class LangSegInferRos:
         z = result_map[2]
 
         return (x, y, z), depth_point
-
 
 
 if __name__ == "__main__":
