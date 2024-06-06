@@ -27,7 +27,7 @@ def to_track_msg(track: Hypothesis) -> Track:
     return track_msg
 
 
-def from_track_msg(track_msg: Track) -> Hypothesis:
+def from_track_msg(track_msg: Track, parent: str = "") -> Hypothesis:
     pose = np.array(
         [
             track_msg.pose.pose.position.x,
@@ -45,4 +45,5 @@ def from_track_msg(track_msg: Track) -> Hypothesis:
         time=det_time,
         score=1,
         label=track_msg.label,
+        parent=parent,
     )

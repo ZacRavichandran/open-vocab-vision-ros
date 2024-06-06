@@ -16,6 +16,7 @@ class Hypothesis:
         idx: int,
         frame: str,
         label: str = "",
+        parent: str = "",
     ) -> None:
         self.n_detections = 0
         self.class_id = class_id
@@ -29,6 +30,7 @@ class Hypothesis:
         self.velocity = np.zeros(3)
         self.history_weight = 0.95
         self.label = label
+        self.parent = parent
 
     def update_pose(self, incoming_pose: np.ndarray) -> np.ndarray:
         return (
@@ -69,7 +71,7 @@ class Hypothesis:
 
     def __str__(self):
         print_pose = ", ".join([f"{v:0.2f}" for v in self.pose])
-        return f"Track(idx={self.idx}, label={self.label}, id={self.class_id}, pose=({print_pose})"
+        return f"Track(idx={self.idx}, label={self.label}, id={self.class_id}, pose=({print_pose}, parent={self.parent})"
 
 
 class HypothesisSet:
