@@ -144,13 +144,13 @@ class HypothesisSet:
 
 
 class Tracker:
-    def __init__(self, distance_threshold: float = 1) -> None:
+    def __init__(self, distance_threshold: float = 1, n_track_thresh: int = 25) -> None:
         class _HypothesisSet(HypothesisSet):  # TODO is there a better way to to this?
             def __init__(self) -> None:
                 super().__init__(distance_threshold)
 
         self.hypotheses = defaultdict(_HypothesisSet)
-        self.n_track_thresh = 25
+        self.n_track_thresh = n_track_thresh
 
         # round about for now
         self.hypothesis_idx = 0
