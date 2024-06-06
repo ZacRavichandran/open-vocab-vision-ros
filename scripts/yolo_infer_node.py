@@ -177,7 +177,7 @@ class LangSegInferRos:
                 if self.img_queue.qsize():
                     img = self.img_queue.get(block=True)
                     self.detect(img)
-                    rospy.sleep(self.detect_period)
+            rospy.sleep(self.detect_period)
 
     def img_callback(self, img_msg: Image) -> None:
         """If `self.drop_old_msg` is true, empty the queue before

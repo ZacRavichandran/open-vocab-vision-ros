@@ -5,12 +5,12 @@ from typing import Sequence
 import numpy as np
 import rospy
 from geometry_msgs.msg import Point
-from lang_seg_ros.tracker import Tracker, Hypothesis
-from lang_seg_ros.viz_utils import create_marker_msg
+from lang_seg_ros.msg import Track
 from lang_seg_ros.ros_utils import to_track_msg
+from lang_seg_ros.tracker import Hypothesis, Tracker
+from lang_seg_ros.viz_utils import create_marker_msg
 from std_msgs.msg import ColorRGBA, Header
 from vision_msgs.msg import Detection2D
-from lang_seg_ros.msg import Track
 from visualization_msgs.msg import Marker
 
 
@@ -21,8 +21,11 @@ class TrackerNode:
         detection_topic = rospy.get_param("~detections", "/yolo_ros/detections")
         track_topic = rospy.get_param("~tracks", "~tracks")
         distance_threshold = rospy.get_param("~distance_threshold", 1)
+        n_track_thresh = rospy.get_param("~n_track_thresh", 25)
 
-        self.tracker = Tracker(distance_threshold=distance_threshold)
+        self.tracker = Tracker(
+            distance_threshold=distance_threshold, n_track_thresh=n_track_thresh
+        )
 
         self.detection_sub = rospy.Subscriber(
             detection_topic, Detection2D, self.detection_cbk
