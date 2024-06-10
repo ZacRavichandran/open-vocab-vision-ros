@@ -5,7 +5,7 @@
     <arg name="output" default="/yolo/pred"/>
     <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
-    <arg name="confidence" default="0.4"/>
+    <arg name="confidence" default="0.3"/>
     <arg name="labels" 
 	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,television,monitor,desk,traffic cone,table,box,package,machine,plant"/>
 
@@ -21,7 +21,7 @@
     <!-- sleep call between detections -->
     <arg name="detect_period" default="0.25"/>
 
-    <arg name="n_track_thresh" default="20"/>
+    <arg name="n_track_thresh" default="5"/>
  
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
