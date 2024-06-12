@@ -3,6 +3,7 @@ import os
 import queue
 import time
 from typing import Tuple, Union
+from pathlib import Path
 
 import cv2
 import cv_bridge
@@ -102,8 +103,8 @@ class Dino:
         config_path=GROUNDING_DINO_CONFIG_PATH,
     ):
         self.grounding_dino_model = GDModel(
-            model_config_path=config_path,
-            model_checkpoint_path=ckpt_path,
+            model_config_path=str(config_path),
+            model_checkpoint_path=str(ckpt_path),
             device="cuda",
         )
         self.classes = classes
@@ -156,6 +157,8 @@ class Dino:
                 detections.xyxy,
                 detections.confidence,
             )
+        else:
+            return img, np.array([]), np.array([]), np.array([])
 
 
 def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
@@ -269,7 +272,12 @@ class LangSegInferRos:
         self.bridge = cv_bridge.CvBridge()
         self.img_queue = queue.Queue(maxsize=2)
 
-        self.yolo_infer = Dino(classes=self.labels, confidence=self.confidence_thresh)
+        self.dino_infer = Dino(
+            classes=self.labels,
+            confidence=self.confidence_thresh,
+            ckpt_path=Path(weights) / "groundingdino_swint_ogc.pth",
+            config_path=Path(weights) / "GroundingDINO_SwinT_OGC.py",
+        )
         rospy.loginfo(" loaded.")
 
         self.intrinsics = None
@@ -352,7 +360,7 @@ class LangSegInferRos:
 
     def detect(self, img_msg: Image) -> None:
         img = decode_img_msg(img_msg)
-        pred_color, classes, boxes, confidences = self.yolo_infer.predict(
+        pred_color, classes, boxes, confidences = self.dino_infer.predict(
             img, debug_msg=self.debug
         )
 

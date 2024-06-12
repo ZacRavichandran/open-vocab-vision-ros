@@ -3,7 +3,7 @@
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
     <arg name="output" default="/grounding_dino_ros/pred"/>
-    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
+    <arg name="weights" default="$(find lang_seg_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.4"/>
     <arg name="labels" 
