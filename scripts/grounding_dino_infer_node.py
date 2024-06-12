@@ -494,6 +494,6 @@ class LangSegInferRos:
 
 
 if __name__ == "__main__":
-    rospy.init_node("lang_seg_ros")
+    rospy.init_node("grounding_dino_ros")
 
     infer = LangSegInferRos()
