@@ -32,5 +32,6 @@ catkin_install_python(PROGRAMS
   scripts/lseg_infer.py
   scripts/yolo_infer_node.py
   scripts/tracker_node.py
+  scripts/grounding_dino_infer_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
