@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<launch>
+    <arg name="input" default="/camera/color/image_raw"/>
+    <arg name="output" default="/grounding_dino_ros/pred"/>
+    <arg name="weights" default="$(find lang_seg_ros)/checkpoints"/>
+    <arg name="drop" default="true"/>
+    <arg name="confidence" default="0.4"/>
+    <arg name="labels" 
+	    default="person,door,elevator,computer,chair,table,robot,street sign,sign,stop sign,trash can,television,monitor,desk,traffic cone,table,box,package,machine,plant"/>
+
+    <arg name="viz" default="true"/>
+    
+    <!-- don't consider detections farther than this -->
+    <arg name="depth_threshold" default="7.5"/>
+
+    <!-- cluster detections within this threshold into same object-->
+    <arg name="distance_threshold" default="1"/>
+    <!-- sleep call between detections -->
+
+    <!-- sleep call between detections -->
+    <arg name="detect_period" default="0.001"/>
+
+    <arg name="n_track_thresh" default="5"/>
+
+    <arg name="publish_deprojection" default="True"/>
+ 
+    <node pkg="image_transport" type="republish"  name="uncompress"
+        args="compressed in:=$(arg input) raw out:=$(arg input)">
+    </node>
+
+    <node pkg="lang_seg_ros" type="grounding_dino_infer_node.py" name="grounding_dino_ros" output="screen">
+        <param name="input" value="$(arg input)"/>
+        <param name="output" value="$(arg output)"/>
+        <param name="weights" value="$(arg weights)"/>
+        <param name="drop" value="$(arg drop)"/>
+        <param name="labels" value="$(arg labels)"/>
+        <param name="depth_threshold" value="$(arg depth_threshold)"/>
+        <param name="publish_deprojection" value="$(arg publish_deprojection)"/>
+	<param name="confidence" value="$(arg confidence)"/>
+	<param name="detect_period" value="$(arg detect_period)"/>
+    </node>
+
+    <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
+        <param name="detections" value="/grounding_dino_ros/detections"/>
+        <param name="distance_threshold" value="$(arg distance_threshold)"/>
+        <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
+        <param name="labels" value="$(arg labels)"/>
+    </node>
+</launch>

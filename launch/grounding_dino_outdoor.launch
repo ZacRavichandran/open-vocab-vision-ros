@@ -7,7 +7,7 @@
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.4"/>
     <arg name="labels" 
-	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,television,monitor,desk,traffic cone,table,box,package,machine,plant"/>
+	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,television,monitor,bench,traffic cone,table,box,package,machine,plant"/>
 
     <arg name="viz" default="true"/>
     
