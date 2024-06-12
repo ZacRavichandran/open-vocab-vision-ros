@@ -21,7 +21,7 @@
     <!-- sleep call between detections -->
     <arg name="detect_period" default="0.001"/>
 
-    <arg name="n_track_thresh" default="5"/>
+    <arg name="n_track_thresh" default="10"/>
 
     <arg name="publish_deprojection" default="True"/>
  

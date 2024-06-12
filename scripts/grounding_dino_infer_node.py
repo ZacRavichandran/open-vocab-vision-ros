@@ -377,6 +377,9 @@ class LangSegInferRos:
         # confidences = pred[0].boxes.conf.cpu().numpy()
 
         if not self.publish_deprojection:
+            for box, class_id, conf in zip(boxes, classes, confidences):
+                print(f"{self.labels[class_id]}: {conf:0.2f}")
+            
             return
 
         for box, class_id, conf in zip(boxes, classes, confidences):
@@ -390,6 +393,10 @@ class LangSegInferRos:
                 h=box[3] - box[1],
                 time=img_msg.header.stamp,
             )
+
+            # dont publish if 0
+            if depth_point == 0:
+                continue
 
             # don't publish detections far from camera
             if depth_point > self.depth_threshold:
@@ -443,7 +450,7 @@ class LangSegInferRos:
         self, x: float, y: float, w: float, h: float, time: float
     ) -> Tuple[float, float, float]:
         if self.last_depth == None or self.intrinsics == None:
-            return
+            return (0, 0, 0), 0
 
         # depth is given in mm. We convert that to meters
         depth_img = decode_img_msg(self.last_depth)
