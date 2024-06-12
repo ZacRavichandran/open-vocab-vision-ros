@@ -42,7 +42,7 @@
     </node>
 
     <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
-        <param name="detections" value="/grounding_dino_ros/detections"
+        <param name="detections" value="/grounding_dino_ros/detections"/>
         <param name="distance_threshold" value="$(arg distance_threshold)"/>
         <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
         <param name="labels" value="$(arg labels)"/>
