@@ -7,6 +7,10 @@ ROS wrapper for running open vocabulary detection and segmentation models.
 - [Open Vocab YOLO](https://github.com/ultralytics/ultralytics)
 - [language-driven semantic segmentation](https://arxiv.org/abs/2201.03546)
 
+## Tracking
+
+The [tracker node](./scripts/tracker_node.py) implements a multiple-hypothesis tracker. This will cluster detections and report probable object tracks.  
+
 ## Installation
 
 (assumes you have a basic ROS install).
