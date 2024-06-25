@@ -2,8 +2,13 @@
 
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
+    <arg name="depth_aligned_info" default="/camera/aligned_depth_to_color/camera_info"/>
+    <arg name="depth_aligned_img" default="/camera/aligned_depth_to_color/image_raw"/>
+    <arg name="target_frame" default="map"/>
+    <arg name="source_frame" default="camera_color_optical_frame"/>
+
     <arg name="output" default="/yolo/pred"/>
-    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.3"/>
     <arg name="labels" 
@@ -16,29 +21,40 @@
 
     <!-- cluster detections within this threshold into same object-->
     <arg name="distance_threshold" default="1"/>
-    <!-- sleep call between detections -->
+
+    <!-- divide depth image by this much to get metric value -->
+    <arg name="depth_scale" default="1000"/>
 
     <!-- sleep call between detections -->
     <arg name="detect_period" default="0.25"/>
 
     <arg name="n_track_thresh" default="5"/>
+
+    <arg name="publish_deprojections" default="true"/>
  
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
     </node>
 
-    <node pkg="lang_seg_ros" type="yolo_infer_node.py" name="yolo_ros" output="screen">
+    <node pkg="open_vocab_vision_ros" type="yolo_infer_node.py" name="yolo_ros" output="screen">
         <param name="input" value="$(arg input)"/>
+        <param name="depth_aligned_info" value="$(arg depth_aligned_info)"/>
+        <param name="depth_aligned_img" value="$(arg depth_aligned_img)"/>
+        <param name="target_frame" value="$(arg target_frame)"/>
+        <param name="source_frame" value="$(arg source_frame)"/>
+        <param name="depth_scale" value="$(arg depth_scale)"/>
         <param name="output" value="$(arg output)"/>
         <param name="weights" value="$(arg weights)"/>
         <param name="drop" value="$(arg drop)"/>
         <param name="labels" value="$(arg labels)"/>
         <param name="depth_threshold" value="$(arg depth_threshold)"/>
-	<param name="confidence" value="$(arg confidence)"/>
-	<param name="detect_period" value="$(arg detect_period)"/>
+        <param name="confidence" value="$(arg confidence)"/>
+        <param name="detect_period" value="$(arg detect_period)"/>
+        <param name="publish_deprojection" value="$(arg publish_deprojections)"/>
+
     </node>
 
-    <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
+    <node pkg="open_vocab_vision_ros" type="tracker_node.py" name="tracker_node" output="screen">
         <param name="distance_threshold" value="$(arg distance_threshold)"/>
         <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
         <param name="labels" value="$(arg labels)"/>

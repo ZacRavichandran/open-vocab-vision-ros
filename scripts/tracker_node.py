@@ -1,14 +1,13 @@
 #!/usr/bin/env python
-from collections import defaultdict
 from typing import Sequence
 
 import numpy as np
 import rospy
 from geometry_msgs.msg import Point
-from lang_seg_ros.msg import Track
-from lang_seg_ros.ros_utils import to_track_msg
-from lang_seg_ros.tracker import Hypothesis, Tracker
-from lang_seg_ros.viz_utils import create_marker_msg
+from open_vocab_vision_ros.msg import Track
+from open_vocab_vision_ros.ros_utils import to_track_msg
+from open_vocab_vision_ros.tracker import Hypothesis, Tracker
+from open_vocab_vision_ros.viz_utils import create_marker_msg
 from std_msgs.msg import ColorRGBA, Header
 from vision_msgs.msg import Detection2D
 from visualization_msgs.msg import Marker
@@ -66,7 +65,7 @@ class TrackerNode:
         for track in tracks:
             self.publish_markers(track)
             self.track_pub.publish(to_track_msg(track))
-            #self.tracker.print_status()
+            # self.tracker.print_status()
 
     def publish_markers(self, track: Hypothesis) -> None:
         header = Header()
