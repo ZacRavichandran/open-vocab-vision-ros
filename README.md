@@ -29,7 +29,7 @@ python -m pip install -f requirements.txt
 python -m pip install -e .
 ```
 
-## YOLO
+### YOLO
 Just install ultralytics
 ``sh
 python -m pip install ultralytics
