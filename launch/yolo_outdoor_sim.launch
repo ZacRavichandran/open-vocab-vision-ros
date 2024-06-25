@@ -15,12 +15,13 @@
     <arg name="viz" default="true"/>
 
     <!-- don't consider detections farther than this -->
-    <arg name="depth_threshold" default="25"/>
+    <arg name="depth_threshold" default="10"/>
 
     <!-- cluster detections within this threshold into same object-->
     <arg name="distance_threshold" default="5"/>
     <!-- sleep call between detections -->
     <arg name="detect_period" default="0.1"/>
+    <arg name="n_track_thresh" default="5"/>
 
     <node pkg="image_transport" type="republish"  name="uncompress"
         args="compressed in:=$(arg input) raw out:=$(arg input)">
@@ -44,5 +45,6 @@
     <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
         <param name="distance_threshold" value="$(arg distance_threshold)"/>
         <param name="labels" value="$(arg labels)"/>
+        <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
     </node>
 </launch>
