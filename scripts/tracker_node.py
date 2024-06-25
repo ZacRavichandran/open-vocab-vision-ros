@@ -66,7 +66,7 @@ class TrackerNode:
         for track in tracks:
             self.publish_markers(track)
             self.track_pub.publish(to_track_msg(track))
-            self.tracker.print_status()
+            #self.tracker.print_status()
 
     def publish_markers(self, track: Hypothesis) -> None:
         header = Header()

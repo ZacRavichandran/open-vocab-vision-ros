@@ -17,7 +17,7 @@ def create_marker_msg(
     color: ColorRGBA,
     orientation: Quaternion = IDENTITY_QUATERNION,
     scale: float = 0.25,
-    marker_type=BASE_MARKER.SPHERE
+    marker_type=BASE_MARKER.SPHERE,
 ) -> Marker:
     marker_msg = Marker()
     marker_msg.id = id
