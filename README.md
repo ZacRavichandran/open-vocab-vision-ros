@@ -31,9 +31,9 @@ python -m pip install -e .
 
 ### YOLO
 Just install ultralytics
-``sh
+```sh
 python -m pip install ultralytics
-``
+```
 
 ### Lang seg
 * install [lang-seg](https://github.com/ZacRavichandran/lang-seg)
