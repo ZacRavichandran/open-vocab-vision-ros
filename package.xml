@@ -5,7 +5,9 @@
   <description>The lang_seg_ros package</description>
   <maintainer email="zacravi@seas.upenn.edu">zacravi</maintainer>
   <license>TODO</license>
+
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
   <buildtool_depend>catkin</buildtool_depend>
-  <export>
-  </export>
+  <export></export>
 </package>

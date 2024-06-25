@@ -1,0 +1,4 @@
+.vscode 
+checkpoints/
+build
+__pycache__
