@@ -13,7 +13,7 @@ try:
 
     from open_vocab_vision_ros.viz_utils import vis_result_fast
 except ImportError as ex:
-    raise ValueError(f"must install grouning dino: {ex}")
+    raise ValueError(f"must install grounding dino: {ex}")
 
 
 class GroundingDinoInfer:
@@ -43,7 +43,7 @@ class GroundingDinoInfer:
         self.grounding_dino_model = GDModel(
             model_config_path=str(config_path),
             model_checkpoint_path=str(ckpt_path),
-            device="cuda",
+            device=device,
         )
         self.classes = classes
         self.confidence = confidence
