@@ -82,7 +82,6 @@ class GroundingDinoInfer:
 
         if len(detections.class_id) > 0:
             ### Non-maximum suppression ###
-            # print(f"Before NMS: {len(detections.xyxy)} boxes")
             nms_idx = (
                 torchvision.ops.nms(
                     torch.from_numpy(detections.xyxy),

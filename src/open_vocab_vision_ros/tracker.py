@@ -1,3 +1,5 @@
+import logging
+import sys
 from collections import defaultdict
 from typing import List
 
@@ -125,8 +127,8 @@ class HypothesisSet:
             added_hypothesis = True
         return added_hypothesis
 
-    def print_status(self):
-        print(f"hypothesis: ")
+    def get_status_str(self):
+        status = f"hypothesis:\n"
         for hypothesis in self.hypotheses:
             print_pose = ", ".join([f"{v:0.2f}" for v in hypothesis.pose])
             print_avg_vel = ", ".join([f"{v:0.2f}" for v in hypothesis.velocity])
@@ -135,12 +137,12 @@ class HypothesisSet:
             print_vel = ", ".join([f"{v:0.2f}" for v in vel])
             print_cov = ", ".join([f"{v:0.2f}" for v in cov[np.diag_indices(3)]])
             det_cov = np.linalg.det(cov)
-            print(
+            status += (
                 f"\tidx: {hypothesis.idx}, class: {hypothesis.class_id}, pose: ({print_pose}), avg vel: ({print_avg_vel})\n"
                 f"\t\t velocity: ({print_vel}), cov: ({print_cov}), det: {det_cov:0.2f}, n_dets: {hypothesis.n_detections}"
             )
 
-        print("---")
+        status += "\n--"
 
 
 class Tracker:
@@ -154,6 +156,10 @@ class Tracker:
 
         # round about for now
         self.hypothesis_idx = 0
+
+        self.logger = logging.getLogger("Tracker")
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(logging.StreamHandler(sys.stdout))
 
     def add_detection(
         self,
@@ -196,6 +202,6 @@ class Tracker:
 
         return tracks
 
-    def print_status(self) -> None:
+    def log_status(self) -> None:
         for hypothesis_set in self.hypotheses.values():
-            hypothesis_set.print_status()
+            self.logger.debug(hypothesis_set.get_status_str())
