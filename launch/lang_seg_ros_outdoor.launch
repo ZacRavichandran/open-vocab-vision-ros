@@ -3,7 +3,7 @@
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
     <arg name="output" default="/lseg/pred"/>
-    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/demo_e200.ckpt"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints/demo_e200.ckpt"/>
     <arg name="drop" default="true"/>
     <arg name="labels"  
         default="gravel,road,bench,garbage bin,grass,building,sky,door,car,person,bush,fence,gate,tree,chair,table,robot,sign,sidewalk,other"/>
@@ -13,7 +13,7 @@
         args="compressed in:=$(arg input) raw out:=$(arg input)">
     </node>
 
-    <node pkg="lang_seg_ros" type="lseg_infer.py" name="lang_seg_ros" output="screen">
+    <node pkg="open_vocab_vision_ros" type="lseg_infer.py" name="open_vocab_vision_ros" output="screen">
         <param name="input" value="$(arg input)"/>
         <param name="output" value="$(arg output)"/>
         <param name="weights" value="$(arg weights)"/>

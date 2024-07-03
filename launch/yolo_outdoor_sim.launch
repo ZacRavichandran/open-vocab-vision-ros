@@ -5,7 +5,7 @@
     <arg name="depth_aligned_info" default="/husky/camera/camera_info"/>
     <arg name="depth_aligned_img" default="/husky/camera/depth_image"/>
     <arg name="output" default="/yolo/pred"/>
-    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
     <arg name="labels" 
     default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,boat,cabin,truck,building"/>
@@ -13,6 +13,7 @@
     <arg name="target_frame" default="world"/>
     <arg name="source_frame" default="husky/camera"/>
     <arg name="viz" default="true"/>
+    <arg name="depth_scale" default="1"/>
 
     <!-- don't consider detections farther than this -->
     <arg name="depth_threshold" default="10"/>
@@ -23,28 +24,5 @@
     <arg name="detect_period" default="0.1"/>
     <arg name="n_track_thresh" default="5"/>
 
-    <node pkg="image_transport" type="republish"  name="uncompress"
-        args="compressed in:=$(arg input) raw out:=$(arg input)">
-    </node>
-
-    <node pkg="lang_seg_ros" type="yolo_infer_node.py" name="yolo_ros" output="screen">
-        <param name="input" value="$(arg input)"/>
-        <param name="depth_aligned_info" value="$(arg depth_aligned_info)"/>
-        <param name="depth_aligned_img" value="$(arg depth_aligned_img)"/>
-        <param name="output" value="$(arg output)"/>
-        <param name="weights" value="$(arg weights)"/>
-        <param name="target_frame" value="$(arg target_frame)"/>
-        <param name="source_frame" value="$(arg source_frame)"/>
-        <param name="drop" value="$(arg drop)"/>
-        <param name="labels" value="$(arg labels)"/>
-        <param name="depth_scale" value="1"/>
-        <param name="depth_threshold" value="$(arg depth_threshold)"/>
-        <param name="detect_period" value="$(arg detect_period)"/>
-    </node>
-
-    <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
-        <param name="distance_threshold" value="$(arg distance_threshold)"/>
-        <param name="labels" value="$(arg labels)"/>
-        <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
-    </node>
+    <include file="$(find open_vocab_vision_ros)/launch/yolo.launch" pass_all_args="true"/>
 </launch>

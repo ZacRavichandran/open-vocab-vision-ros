@@ -2,8 +2,8 @@ import numpy as np
 from geometry_msgs.msg import Point
 from std_msgs.msg import Header
 
-from lang_seg_ros.msg import Track
-from lang_seg_ros.tracker import Hypothesis
+from open_vocab_vision_ros.msg import Track
+from open_vocab_vision_ros.tracker import Hypothesis
 
 
 def header_from_track(track: Hypothesis) -> Header:

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>lang_seg_ros</name>
+  <name>open_vocab_vision_ros</name>
   <version>0.0.0</version>
-  <description>The lang_seg_ros package</description>
+  <description>The open_vocab_vision_ros package</description>
   <maintainer email="zacravi@seas.upenn.edu">zacravi</maintainer>
   <license>TODO</license>
 

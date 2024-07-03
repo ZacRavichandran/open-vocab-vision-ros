@@ -3,7 +3,7 @@
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
     <arg name="output" default="/yolo/pred"/>
-    <arg name="weights" default="$(find lang_seg_ros)/checkpoints/yolov8x-worldv2.pt"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints/yolov8x-worldv2.pt"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.3"/>
     <arg name="labels" 
@@ -23,24 +23,6 @@
 
     <arg name="n_track_thresh" default="5"/>
  
-    <node pkg="image_transport" type="republish"  name="uncompress"
-        args="compressed in:=$(arg input) raw out:=$(arg input)">
-    </node>
+    <include file="$(find open_vocab_vision_ros)/launch/yolo.launch" pass_all_args="true"/>
 
-    <node pkg="lang_seg_ros" type="yolo_infer_node.py" name="yolo_ros" output="screen">
-        <param name="input" value="$(arg input)"/>
-        <param name="output" value="$(arg output)"/>
-        <param name="weights" value="$(arg weights)"/>
-        <param name="drop" value="$(arg drop)"/>
-        <param name="labels" value="$(arg labels)"/>
-        <param name="depth_threshold" value="$(arg depth_threshold)"/>
-	<param name="confidence" value="$(arg confidence)"/>
-	<param name="detect_period" value="$(arg detect_period)"/>
-    </node>
-
-    <node pkg="lang_seg_ros" type="tracker_node.py" name="tracker_node" output="screen">
-        <param name="distance_threshold" value="$(arg distance_threshold)"/>
-        <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
-        <param name="labels" value="$(arg labels)"/>
-    </node>
 </launch>
