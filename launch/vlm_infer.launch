@@ -1,0 +1,12 @@
+<launch>
+
+    <arg name="image_topic" default="/camera/color/image_raw"/>
+    <arg name="classes" default="parking lot, road, sidewalk, park, unknown"/>
+
+
+    <node pkg="open_vocab_vision_ros" type="vlm_infer.py" name="vlm_infer" output="screen">
+        <param name="image_topic" value="$(arg image_topic)"/>
+        <param name="classes" value="$(arg classes)"/>
+    </node>
+
+</launch>

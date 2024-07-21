@@ -8,6 +8,11 @@ geometry_msgs
 std_msgs
 )
 
+add_service_files(
+  FILES
+  Query.srv
+)
+
 include_directories(
 )
 
@@ -33,5 +38,6 @@ catkin_install_python(PROGRAMS
   scripts/yolo_infer_node.py
   scripts/tracker_node.py
   scripts/grounding_dino_infer_node.py
+  scripts/vlm_infer.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
