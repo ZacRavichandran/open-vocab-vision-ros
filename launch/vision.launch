@@ -1,0 +1,37 @@
+<launch>
+    <arg name="input" default="/camera/color/image_raw"/>
+    <arg name="output" default="/grounding_dino_ros/pred"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
+    <arg name="drop" default="true"/>
+    <arg name="confidence" default="0.4"/>
+    <arg name="labels" 
+	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,bench,traffic cone,table,box,package,machine,plant"/>
+
+    <arg name="viz" default="true"/>
+    
+    <!-- don't consider detections farther than this -->
+    <arg name="depth_threshold" default="7.5"/>
+
+    <!-- cluster detections within this threshold into same object-->
+    <arg name="distance_threshold" default="1"/>
+
+    <!-- divide depth image by this much to get metric value -->
+    <arg name="depth_scale" default="1000"/>
+
+    <!-- sleep call between detections -->
+    <arg name="detect_period" default="0.001"/>
+
+    <arg name="n_track_thresh" default="10"/>
+
+    <arg name="publish_deprojections" default="True"/>
+
+    <arg name="vlm" default="true"/>
+
+    <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch)" pass_all_args="true"/>
+
+    <group if="$(arg vlm)">
+        <include file="$(find open_vocab_vision_ros)/launch/vlm_infer.launch">
+            <arg name="classes" value="park, road, sidewalk, parking lot, patio, unknown"/>
+        </include>
+    </group>
+</launch>
