@@ -55,9 +55,10 @@ class VLMInfer:
             msg = "unknown"
             return QueryResponse(success=False, answer=msg)
 
-        query = f"{req.query}. Keep you answer to 15 words or less"
+        query = f"{req.query}. And why? Provide a brief explaination with details in 25 words or less."
+        rospy.loginfo(f"sending query: {query}")
         msg = self.vlm.open_query(prompt=query, image=self.latest_img)
-        parsed = msg.split(req.query)[-1]
+        parsed = msg.split(query)[-1]
         rospy.loginfo(f"vlm returned {msg}")
 
         return QueryResponse(success=True, answer=parsed)
