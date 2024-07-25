@@ -27,7 +27,7 @@
 
     <arg name="vlm" default="true"/>
 
-    <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch)" pass_all_args="true"/>
+    <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch" pass_all_args="true"/>
 
     <group if="$(arg vlm)">
         <include file="$(find open_vocab_vision_ros)/launch/vlm_infer.launch">
