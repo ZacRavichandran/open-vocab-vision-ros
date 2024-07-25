@@ -4,12 +4,11 @@ from typing import Sequence
 import numpy as np
 import rospy
 from geometry_msgs.msg import Point
-from open_vocab_vision_ros.msg import Track
+from open_vocab_vision_ros.msg import Track, Detection
 from open_vocab_vision_ros.ros_utils import to_track_msg
 from open_vocab_vision_ros.tracker import Hypothesis, Tracker
 from open_vocab_vision_ros.viz_utils import create_marker_msg
 from std_msgs.msg import ColorRGBA, Header
-from vision_msgs.msg import Detection2D
 from visualization_msgs.msg import Marker
 
 
@@ -27,7 +26,7 @@ class TrackerNode:
         )
 
         self.detection_sub = rospy.Subscriber(
-            detection_topic, Detection2D, self.detection_cbk
+            detection_topic, Detection, self.detection_cbk
         )
         self.track_pub = rospy.Publisher(track_topic, Track, queue_size=10)
 
@@ -94,11 +93,13 @@ class TrackerNode:
             text_msg.text = self.labels[track.class_id]
             self.track_viz.publish(text_msg)
 
-    def detection_cbk(self, detection_msg: Detection2D) -> None:
+    def detection_cbk(self, detection_msg: Detection) -> None:
+        assert len(detection_msg.results) == 1, "cannot support >1 atm"
         pose = detection_msg.results[0].pose.pose.position
         pose = np.array([pose.x, pose.y, pose.z])
         class_id = detection_msg.results[0].id
         score = detection_msg.results[0].score
+        label = detection_msg.labels[0]
         time_s = (
             detection_msg.header.stamp.secs + detection_msg.header.stamp.nsecs / 1e9
         )
@@ -108,7 +109,7 @@ class TrackerNode:
             score=score,
             pose=pose,
             frame=detection_msg.header.frame_id,
-            label="" if not len(self.labels) else self.labels[class_id],
+            label=label,
         )
         # self.tracker.log_status()
 

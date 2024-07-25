@@ -67,7 +67,8 @@ class Hypothesis:
     def is_same(self, incoming_hypothesis, pos_tol: float = 1) -> bool:
         return (
             self.idx == incoming_hypothesis.idx
-            and self.class_id == incoming_hypothesis.class_id
+            and self.label == incoming_hypothesis.label
+            # and self.class_id == incoming_hypothesis.class_id  # use label for open-vocab detection
             and np.linalg.norm(self.pose - incoming_hypothesis.pose) < pos_tol
         )
 
@@ -96,7 +97,7 @@ class HypothesisSet:
         pose: np.ndarray,
         n_hypothesis: int,
         frame: str,
-        label: str = "",
+        label: str,
     ) -> bool:
         # find best fit pose
         added_hypothesis = False
@@ -170,7 +171,7 @@ class Tracker:
         frame: str,
         label: str = "",
     ) -> None:
-        added = self.hypotheses[class_id].add_detection(
+        added = self.hypotheses[label].add_detection(
             time=time,
             class_id=class_id,
             score=score,

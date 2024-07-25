@@ -10,10 +10,12 @@ import tf2_ros
 from geometry_msgs.msg import Point, Quaternion
 from rosbags.typesys.types import sensor_msgs__msg__CompressedImage as CompressedImgMsg
 from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
+from open_vocab_vision_ros.msg import Detection
+from open_vocab_vision_ros.srv import SetLabels, SetLabelsRequest, SetLabelsResponse
 from scipy.spatial.transform import Rotation
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import ColorRGBA, Header
-from vision_msgs.msg import Detection2D, ObjectHypothesisWithPose
+from vision_msgs.msg import ObjectHypothesisWithPose
 from visualization_msgs.msg import Marker
 
 from open_vocab_vision_ros.viz_utils import create_marker_msg
@@ -76,6 +78,14 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
     return img
 
 
+class Predictor:
+    def set_labels(self) -> bool:
+        raise NotImplementedError()
+
+    def predict(self):
+        raise NotImplementedError()
+
+
 class DetectionNode:
     """Base class for detection node
 
@@ -111,6 +121,7 @@ class DetectionNode:
         self.target_frame = "target_frame"
         self.source_frame = "source_frame"
         self.debug = True
+        self.predictor = Predictor()
 
         raise NotImplementedError()
 
@@ -188,7 +199,7 @@ class DetectionNode:
         # setup publishers
         # #
         self.img_pub = rospy.Publisher(pub_topic, Image, queue_size=1)
-        self.detection_pub = rospy.Publisher("~detections", Detection2D, queue_size=1)
+        self.detection_pub = rospy.Publisher("~detections", Detection, queue_size=1)
 
         # #
         # for visualization
@@ -197,7 +208,22 @@ class DetectionNode:
         self.marker_count = 1000  # deconflict from tracks
         self.max_marker_count = 2000
 
+        self.class_srv = rospy.Service("~set_labels", SetLabels, self.set_labels)
+        self.setting_labels = False
+
         return weights
+
+    def set_labels(self, req: SetLabelsRequest) -> SetLabelsResponse:
+        try:
+            self.labels = [l.strip() for l in req.labels.split(",")]
+            self.setting_labels = True
+            self.predictor.set_labels(self.labels)
+            self.setting_labels = False
+
+            rospy.loginfo(f"setting labels to: {self.labels}")
+            return SetLabelsResponse(success=True)
+        except:
+            return SetLabelsResponse(success=False)
 
     def spin_node(self):
         """Read from image queue and run detection.
@@ -272,6 +298,7 @@ class DetectionNode:
         confidence: float,
         pose: Tuple[float, float, float],
         header: Header,
+        label: str,
     ) -> None:
         object_msgs = []
         object_msg = ObjectHypothesisWithPose()
@@ -280,10 +307,11 @@ class DetectionNode:
         object_msg.pose.pose.position = Point(x=pose[0], y=pose[1], z=pose[2])
         object_msg.pose.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
         object_msgs.append(object_msg)
-        detection_msg = Detection2D()
+        detection_msg = Detection()
         detection_msg.header = header
         detection_msg.header.frame_id = self.target_frame  # TODO yes?
         detection_msg.results = object_msgs
+        detection_msg.labels.append(label)
 
         self.detection_pub.publish(detection_msg)
 
@@ -371,6 +399,9 @@ class DetectionNode:
         img_msg : Image
             Incoming image message.
         """
+        if self.setting_labels:
+            return
+
         img = decode_img_msg(img_msg)
         pred_color, classes, boxes, confidences = self.predictor.predict(
             img, plot_output=self.debug
@@ -415,6 +446,7 @@ class DetectionNode:
                 confidence=conf,
                 pose=(x, y, z),
                 header=img_msg.header,
+                label=self.labels[class_id],
             )
 
             self.publish_detection_marker(header=img_msg.header, position=(x, y, z))

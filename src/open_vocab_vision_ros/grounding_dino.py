@@ -49,6 +49,10 @@ class GroundingDinoInfer:
         self.confidence = confidence
         self.grounding_dino_model.model.eval()
 
+    def set_labels(self, labels: List[str]) -> bool:
+        self.classes = labels
+        return True
+
     def predict(
         self, img: np.ndarray, plot_output: Optional[bool] = True
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:

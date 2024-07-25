@@ -27,6 +27,10 @@ class YoloInfer:
         confidences = pred[0].boxes.conf.cpu().numpy()
         return pred_color, classes, boxes, confidences
 
+    def set_labels(self, labels: List[str]) -> bool:
+        self.yolo_infer.set_classes(labels)
+        return True
+
 
 class YoloInferNode(DetectionNode):
 
