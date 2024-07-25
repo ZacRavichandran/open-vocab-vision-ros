@@ -50,16 +50,16 @@ class VLMInfer:
 
         return TriggerResponse(success=True, message=answer)
 
-    def answer_scene(self, req: QueryRequest) -> TriggerResponse:
+    def answer_scene(self, req: QueryRequest) -> QueryResponse:
         if self.latest_img is None:
             msg = "unknown"
-            return TriggerResponse(success=False, message=msg)
+            return QueryResponse(success=False, answer=msg)
 
         msg = self.vlm.open_query(prompt=req.query, image=self.latest_img)
         parsed = msg.split(req.query)[-1]
         rospy.loginfo(f"vlm returned {msg}")
 
-        return TriggerResponse(success=True, message=parsed)
+        return QueryResponse(success=True, answer=parsed)
 
 
 if __name__ == "__main__":
