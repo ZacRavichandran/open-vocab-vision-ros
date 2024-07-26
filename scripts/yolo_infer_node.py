@@ -34,7 +34,7 @@ class YoloInfer:
         return pred_color, cls_val, boxes, confidences
 
     def set_labels(self, labels: List[str]) -> bool:
-        self.yolo_infer.set_classes(labels)
+        # self.yolo_infer.set_classes(labels)
         self.labels = labels
         return True
 

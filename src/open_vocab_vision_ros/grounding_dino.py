@@ -110,11 +110,10 @@ class GroundingDinoInfer:
 
             if plot_output:
                 annotated_image, labels = vis_result_fast(
-                    img, detections,pred_classes, instance_random_color=True
+                    img, detections, pred_classes, instance_random_color=True
                 )
 
             label_str = [pred_classes[cid] for cid in detections.class_id]
-
 
             return (
                 annotated_image,
