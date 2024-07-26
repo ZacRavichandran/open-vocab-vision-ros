@@ -302,7 +302,7 @@ class DetectionNode:
     ) -> None:
         object_msgs = []
         object_msg = ObjectHypothesisWithPose()
-        object_msg.id = class_id
+        object_msg.id = 0  # TODO deprecating class ids
         object_msg.score = confidence
         object_msg.pose.pose.position = Point(x=pose[0], y=pose[1], z=pose[2])
         object_msg.pose.pose.orientation = Quaternion(x=0, y=0, z=0, w=1)
@@ -402,6 +402,8 @@ class DetectionNode:
         if self.setting_labels:
             return
 
+        pred_labels=self.labels.copy()
+
         img = decode_img_msg(img_msg)
         pred_color, classes, boxes, confidences = self.predictor.predict(
             img, plot_output=self.debug
@@ -417,7 +419,7 @@ class DetectionNode:
 
         if not self.publish_deprojection:
             for box, class_id, conf in zip(boxes, classes, confidences):
-                rospy.logdebug(f"{self.labels[class_id]}: {conf:0.2f}")
+                rospy.logdebug(f"{class_id}: {conf:0.2f}")
 
             return
 
@@ -446,7 +448,7 @@ class DetectionNode:
                 confidence=conf,
                 pose=(x, y, z),
                 header=img_msg.header,
-                label=self.labels[class_id],
+                label=class_id,
             )
 
             self.publish_detection_marker(header=img_msg.header, position=(x, y, z))

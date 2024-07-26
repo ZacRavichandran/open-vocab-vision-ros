@@ -15,20 +15,27 @@ class YoloInfer:
     def __init__(self, weights: str, labels: List[str]) -> None:
         self.yolo_infer = YOLO(weights)
         self.yolo_infer.set_classes(labels)
+        self.labels = labels
 
     def predict(
         self, img: np.ndarray, plot_output: bool
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        pred_labels = self.labels.copy()
+        self.yolo_infer.set_classes(pred_labels)
         pred = self.yolo_infer.predict(img)
 
         pred_color = pred[0].plot() if plot_output else img
         boxes = pred[0].boxes.xyxy.cpu().numpy()
         classes = pred[0].boxes.cls.cpu().numpy().astype(np.int16)
         confidences = pred[0].boxes.conf.cpu().numpy()
-        return pred_color, classes, boxes, confidences
+
+        cls_val = [pred_labels[c] for c in classes]
+
+        return pred_color, cls_val, boxes, confidences
 
     def set_labels(self, labels: List[str]) -> bool:
         self.yolo_infer.set_classes(labels)
+        self.labels = labels
         return True
 
 

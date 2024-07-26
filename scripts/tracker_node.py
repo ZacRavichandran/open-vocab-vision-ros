@@ -90,7 +90,7 @@ class TrackerNode:
                 position=[track.pose[0], track.pose[1], track.pose[2] + 0.5],
             )
             text_msg.type = marker_msg.TEXT_VIEW_FACING
-            text_msg.text = self.labels[track.class_id]
+            text_msg.text = track.label 
             self.track_viz.publish(text_msg)
 
     def detection_cbk(self, detection_msg: Detection) -> None:

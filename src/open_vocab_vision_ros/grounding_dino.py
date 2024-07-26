@@ -73,10 +73,12 @@ class GroundingDinoInfer:
             - boxes in xyxy
             - confidences
         """
+        pred_classes = self.classes.copy()
+
         t1 = time.time()
         detections = self.grounding_dino_model.predict_with_classes(
             img,
-            self.classes,
+            pred_classes,
             box_threshold=self.confidence,
             text_threshold=self.confidence,
         )
@@ -108,14 +110,17 @@ class GroundingDinoInfer:
 
             if plot_output:
                 annotated_image, labels = vis_result_fast(
-                    img, detections, self.classes, instance_random_color=True
+                    img, detections,pred_classes, instance_random_color=True
                 )
+
+            label_str = [pred_classes[cid] for cid in detections.class_id]
+
 
             return (
                 annotated_image,
-                detections.class_id,
+                label_str,
                 detections.xyxy,
                 detections.confidence,
             )
         else:
-            return img, np.array([]), np.array([]), np.array([])
+            return img, "", np.array([]), np.array([])
