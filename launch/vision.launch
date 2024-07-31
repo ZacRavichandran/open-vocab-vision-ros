@@ -4,8 +4,7 @@
     <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.4"/>
-    <arg name="labels" 
-	    default="car,person,door,chair,table,robot,street sign,sign,stop sign,lamp pole,trash can,bench,traffic cone,table,box,package,machine,plant"/>
+    <arg name="labels" default=""/>
 
     <arg name="viz" default="true"/>
     

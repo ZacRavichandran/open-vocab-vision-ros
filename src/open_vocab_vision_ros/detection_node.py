@@ -170,7 +170,7 @@ class DetectionNode:
             self.labels = self.labels.split(",")
             self.labels = [l.strip() for l in self.labels]
         else:
-            self.labels = self.DEFAULT_LABELS
+            self.labels = []
         rospy.loginfo(f"using labels: {self.labels}")
 
         self.bridge = cv_bridge.CvBridge()
@@ -236,7 +236,9 @@ class DetectionNode:
             if not self.img_queue.empty():
                 if self.img_queue.qsize():
                     img = self.img_queue.get(block=True)
-                    self.detect(img)
+
+                    if len(self.labels):
+                        self.detect(img)
             rospy.sleep(self.detect_period)
 
     def img_callback(self, img_msg: Image) -> None:

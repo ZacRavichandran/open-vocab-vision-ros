@@ -5,7 +5,7 @@
    <arg name="publish_deprojections" default="True"/>
  
     <arg name="labels" 
-	    default="backpack,person,door,elevator,computer,refrigerator,chair,table,robot,street sign,sign,stop sign,trash can,television,monitor,desk,traffic cone,table,box,package,machine,plant"/>
+	    default=""/>
     
     <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch" pass_all_args="true"/>
 
