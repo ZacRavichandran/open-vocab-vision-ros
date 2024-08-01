@@ -20,7 +20,7 @@ class VLMInfer:
         self.vlm = VLMWrapper(model=model, classes=classes_list)
 
         self.latest_img = None
-        self.img_sub = rospy.Subscriber(input_topic, Image, self.img_cbk)
+        self.img_sub = rospy.Subscriber(input_topic, Image, self.img_cbk, queue_size=1)
         self.cls_scene = rospy.Service("~classify_scene", Trigger, self.classify_scene)
         self.open_cls_scene = rospy.Service(
             "~open_classify_scene", Trigger, self.open_classify_scene
