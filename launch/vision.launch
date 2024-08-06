@@ -12,7 +12,7 @@
     <arg name="depth_threshold" default="7.5"/>
 
     <!-- cluster detections within this threshold into same object-->
-    <arg name="distance_threshold" default="1"/>
+    <arg name="distance_threshold" default="2"/>
 
     <!-- divide depth image by this much to get metric value -->
     <arg name="depth_scale" default="1000"/>
