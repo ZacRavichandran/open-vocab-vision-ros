@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
+    <arg name="depth_aligned_img" default="/camera/aligned_depth_to_color/image_raw"/>
+    <arg name="depth_aligned_info" default="/camera/aligned_depth_to_color/camera_info"/>
+    <arg name="target_frame" default="map"/>
+    <arg name="source_frame" default="camera_color_optical_frame"/>
+
     <arg name="output" default="/grounding_dino_ros/pred"/>
     <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
@@ -33,6 +37,11 @@
 
     <node pkg="open_vocab_vision_ros" type="grounding_dino_infer_node.py" name="grounding_dino_ros" output="screen">
         <param name="input" value="$(arg input)"/>
+        <param name="depth_aligned_img" value="$(arg depth_aligned_img)"/>
+        <param name="depth_aligned_info" value="$(arg depth_aligned_info)"/>
+        <param name="target_frame" value="$(arg target_frame)"/> 
+        <param name="source_frame" value="$(arg source_frame)"/>
+ 
         <param name="output" value="$(arg output)"/>
         <param name="weights" value="$(arg weights)"/>
         <param name="drop" value="$(arg drop)"/>
