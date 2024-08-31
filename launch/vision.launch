@@ -1,7 +1,7 @@
 <launch>
     <arg name="input" default="/camera/color/image_raw"/>
     <arg name="output" default="/grounding_dino_ros/pred"/>
-    <arg name="weights" default="$(find open_vocab_vision_ros)/weights"/>
+    <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.7"/>
     <arg name="labels" default=""/>
