@@ -3,7 +3,7 @@
     <arg name="output" default="/grounding_dino_ros/pred"/>
     <arg name="weights" default="$(find infrastructure_jackal)/weights"/>
     <arg name="drop" default="true"/>
-    <arg name="confidence" default="0.7"/>
+    <arg name="confidence" default="0.5"/>
     <arg name="labels" default=""/>
 
     <arg name="viz" default="true"/>
