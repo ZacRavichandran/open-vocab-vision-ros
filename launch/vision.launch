@@ -1,5 +1,5 @@
 <launch>
-    <arg name="input" default="/camera/color/image_raw"/>
+    <arg name="input" default="/zed2i/zed_node/rgb/image_rect_color"/>
     <arg name="output" default="/grounding_dino_ros/pred"/>
     <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
@@ -9,7 +9,7 @@
     <arg name="viz" default="true"/>
     
     <!-- don't consider detections farther than this -->
-    <arg name="depth_threshold" default="7.5"/>
+    <arg name="depth_threshold" default="12"/>
 
     <!-- cluster detections within this threshold into same object-->
     <arg name="distance_threshold" default="2"/>

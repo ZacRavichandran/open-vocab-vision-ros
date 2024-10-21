@@ -60,6 +60,13 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
                     shape=(msg.height, msg.width, 3), dtype=np.uint8, buffer=msg.data
                 )
             )
+        elif msg.encoding == "bgra8":
+            img = np.copy(
+                np.ndarray(
+                    shape=(msg.height, msg.width, 4), dtype=np.uint8, buffer=msg.data
+                )
+                )[:, :, :3]
+            img = img[..., ::-1]  # swap r and b channels
         elif msg.encoding == "rgba8":
             img = np.copy(
                 np.ndarray(
