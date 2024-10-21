@@ -11,7 +11,14 @@ from geometry_msgs.msg import Point, Quaternion
 from rosbags.typesys.types import sensor_msgs__msg__CompressedImage as CompressedImgMsg
 from rosbags.typesys.types import sensor_msgs__msg__Image as ImageMsg
 from open_vocab_vision_ros.msg import Detection
-from open_vocab_vision_ros.srv import SetLabels, SetLabelsRequest, SetLabelsResponse
+from open_vocab_vision_ros.srv import (
+    SetLabels,
+    SetLabelsRequest,
+    SetLabelsResponse,
+    GetLabels,
+    GetLabelsRequest,
+    GetLabelsResponse,
+)
 from scipy.spatial.transform import Rotation
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import ColorRGBA, Header
@@ -53,6 +60,13 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
                     shape=(msg.height, msg.width, 3), dtype=np.uint8, buffer=msg.data
                 )
             )
+        elif msg.encoding == "bgra8":
+            img = np.copy(
+                np.ndarray(
+                    shape=(msg.height, msg.width, 4), dtype=np.uint8, buffer=msg.data
+                )
+                )[:, :, :3]
+            img = img[..., ::-1]  # swap r and b channels
         elif msg.encoding == "rgba8":
             img = np.copy(
                 np.ndarray(
@@ -209,6 +223,7 @@ class DetectionNode:
         self.max_marker_count = 2000
 
         self.class_srv = rospy.Service("~set_labels", SetLabels, self.set_labels)
+        self.get_class_srv = rospy.Service("~get_labels", GetLabels, self.get_labels)
         self.setting_labels = False
 
         return weights
@@ -224,6 +239,9 @@ class DetectionNode:
             return SetLabelsResponse(success=True)
         except:
             return SetLabelsResponse(success=False)
+
+    def get_labels(self, req: GetLabelsRequest) -> GetLabelsResponse:
+        return GetLabelsResponse(labels=str(self.labels))
 
     def spin_node(self):
         """Read from image queue and run detection.
@@ -404,7 +422,7 @@ class DetectionNode:
         if self.setting_labels:
             return
 
-        pred_labels=self.labels.copy()
+        pred_labels = self.labels.copy()
 
         img = decode_img_msg(img_msg)
         pred_color, classes, boxes, confidences = self.predictor.predict(

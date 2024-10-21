@@ -45,8 +45,8 @@ class VLMWrapper:
         self.scene_prompt += "Focus on the nearest parts of the image. Provide a single number. Class id: "
 
         self.open_scene_prompt = (
-            "You are a robot. What is the functional description of the ground you are standing on? "
-            "(for example: sidewalk, road, park, parking lot, patio) Provide your answer as a single noun with modiers.  Answer: "
+            "You are a robot. Describe where you are so you can plan. "
+            "Provide your answer as a noun with a short description. For example: empty sidewalk, road, park with trees and benches, empty parking lot, patio. Answer: "
         )
 
     def open_query(self, prompt: str, image: np.ndarray) -> str:
@@ -97,7 +97,6 @@ class LlavaPhi3:
         self, raw_prompt: str, raw_image: Image, crop: Optional[bool] = False
     ) -> str:
         prompt = self.format_prompt(prompt=raw_prompt)
-        image_file = "images/sidewalk_2.png"
         # raw_image = Image.open(image_file)
 
         # raw_image = Image.open(requests.get(image_file, stream=True).raw)

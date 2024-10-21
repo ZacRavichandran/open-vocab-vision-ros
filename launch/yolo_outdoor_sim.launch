@@ -14,6 +14,7 @@
 
     <arg name="target_frame" default="world"/>
     <arg name="source_frame" default="husky/camera"/>
+
     <arg name="viz" default="true"/>
     <arg name="depth_scale" default="1"/>
 

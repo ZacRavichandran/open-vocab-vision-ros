@@ -13,6 +13,7 @@ add_service_files(
   FILES
   Query.srv
   SetLabels.srv
+  GetLabels.srv
 )
 
 include_directories(
