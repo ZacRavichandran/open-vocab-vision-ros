@@ -31,6 +31,7 @@
     <group if="$(arg vlm)">
         <include file="$(find open_vocab_vision_ros)/launch/vlm_infer.launch">
             <arg name="classes" value="park, road, sidewalk, parking lot, patio, unknown"/>
+	    <arg name="image_topic" value="$(arg input)"/>
         </include>
     </group>
 </launch>
