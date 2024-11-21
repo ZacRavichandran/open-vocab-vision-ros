@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
+    <arg name="ns" default="/"/>
     <arg name="input" default="/husky/camera/image"/>
     <arg name="depth_aligned_info" default="/husky/camera/camera_info"/>
     <arg name="depth_aligned_img" default="/husky/camera/depth_image"/>
@@ -33,9 +34,12 @@
 
     <arg name="vlm" default="true"/>
 
-    <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch" pass_all_args="true"/>
+    <group ns="$(arg ns)">
+        <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch" pass_all_args="true"/>
+    </group>
 
-    <group if="$(arg vlm)">
+
+    <group if="$(arg vlm)" ns="$(arg ns)">
         <include file="$(find open_vocab_vision_ros)/launch/vlm_infer_sim.launch">
         </include>
     </group>

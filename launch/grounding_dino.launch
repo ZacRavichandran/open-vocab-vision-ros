@@ -6,7 +6,7 @@
     <arg name="target_frame" default="map"/>
     <arg name="source_frame" default="camera_color_optical_frame"/>
 
-    <arg name="output" default="/grounding_dino_ros/pred"/>
+    <arg name="output" default="grounding_dino_ros/pred"/>
     <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.4"/>
@@ -54,7 +54,7 @@
     </node>
 
     <node pkg="open_vocab_vision_ros" type="tracker_node.py" name="tracker_node" output="screen">
-        <param name="detections" value="/grounding_dino_ros/detections"/>
+        <param name="detections" value="grounding_dino_ros/detections"/>
         <param name="distance_threshold" value="$(arg distance_threshold)"/>
         <param name="n_track_thresh" value="$(arg n_track_thresh)"/>
         <param name="labels" value="$(arg labels)"/>
