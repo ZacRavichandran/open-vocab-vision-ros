@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <launch>
-   <arg name="confidence" default="0.4"/>
+   <arg name="confidence" default="0.7"/>
    <arg name="publish_deprojections" default="True"/>
    <arg name="vlm" default="true"/>
  
     <arg name="labels" 
-	    default=""/>
+	    default="person,desk,chair,television,plant"/>
     
     <include file="$(find open_vocab_vision_ros)/launch/grounding_dino.launch" pass_all_args="true"/>
 
