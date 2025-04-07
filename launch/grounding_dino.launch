@@ -13,6 +13,8 @@
     <arg name="labels" 
 	    default=""/>
 
+    <arg name="base_labels" default=""/>
+
     <arg name="viz" default="true"/>
     
     <!-- don't consider detections farther than this -->
@@ -46,6 +48,7 @@
         <param name="weights" value="$(arg weights)"/>
         <param name="drop" value="$(arg drop)"/>
         <param name="labels" value="$(arg labels)"/>
+	<param name="base_labels" value="$(arg base_labels)"/>
         <param name="depth_threshold" value="$(arg depth_threshold)"/>
         <param name="publish_deprojection" value="$(arg publish_deprojections)"/>
         <param name="depth_scale" value="$(arg depth_scale)"/>

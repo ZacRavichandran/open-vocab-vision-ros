@@ -1,5 +1,5 @@
 import queue
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 import cv2
 import cv_bridge
@@ -171,6 +171,7 @@ class DetectionNode:
         # detection params
         # #
         self.labels = rospy.get_param("~labels", "")
+        self.base_labels = rospy.get_param("~base_labels", "")
         self.confidence_thresh = rospy.get_param("~confidence", 0.5)
         self.depth_threshold = rospy.get_param("~depth_threshold", 7.5)
         self.depth_scale = rospy.get_param("~depth_scale", 1000)
@@ -180,12 +181,10 @@ class DetectionNode:
         # #
         # setup class members
         # #
-        if self.labels != "":
-            self.labels = self.labels.split(",")
-            self.labels = [l.strip() for l in self.labels]
-        else:
-            self.labels = []
-        rospy.loginfo(f"using labels: {self.labels}")
+        self.labels = self.parse_labels(self.labels)
+        self.base_labels = self.parse_labels(self.base_labels)
+
+        rospy.loginfo(f"\n\n\nusing labels: {self.labels} and {self.base_labels}")
 
         self.bridge = cv_bridge.CvBridge()
         self.img_queue = queue.Queue(maxsize=2)
@@ -224,24 +223,38 @@ class DetectionNode:
 
         self.class_srv = rospy.Service("~set_labels", SetLabels, self.set_labels)
         self.get_class_srv = rospy.Service("~get_labels", GetLabels, self.get_labels)
+
         self.setting_labels = False
 
         return weights
+    
+    def parse_labels(self, labels: str) -> List[str]:
+        if labels != "":
+            labels = labels.split(",")
+            labels = [l.strip() for l in labels]
+        else:
+            labels = []
+
+        return labels
 
     def set_labels(self, req: SetLabelsRequest) -> SetLabelsResponse:
         try:
             self.labels = [l.strip() for l in req.labels.split(",")]
-            self.setting_labels = True
-            self.predictor.set_labels(self.labels)
-            self.setting_labels = False
-
+            self.set_predictor_labels()
             rospy.loginfo(f"setting labels to: {self.labels}")
             return SetLabelsResponse(success=True)
-        except:
+        except Exception as ex:
+            print(ex)
             return SetLabelsResponse(success=False)
 
+    def set_predictor_labels(self):
+        prediction_labels = list(set(self.labels + self.base_labels))
+        self.setting_labels = True
+        self.predictor.set_labels(prediction_labels)
+        self.setting_labels = False
+
     def get_labels(self, req: GetLabelsRequest) -> GetLabelsResponse:
-        return GetLabelsResponse(labels=str(self.labels))
+        return GetLabelsResponse(labels=str(self.labels + self.base_labels))
 
     def spin_node(self):
         """Read from image queue and run detection.
@@ -255,7 +268,7 @@ class DetectionNode:
                 if self.img_queue.qsize():
                     img = self.img_queue.get(block=True)
 
-                    if len(self.labels):
+                    if len(self.labels + self.base_labels):
                         self.detect(img)
             rospy.sleep(self.detect_period)
 
