@@ -5,9 +5,9 @@
     <arg name="output" default="/grounding_dino_ros/pred"/>
     <arg name="weights" default="$(find open_vocab_vision_ros)/checkpoints"/>
     <arg name="drop" default="true"/>
-    <arg name="confidence" default="0.5"/>
+    <arg name="confidence" default="0.4"/>
     <arg name="labels" default=""/>
-    <arg name="base_labels" default="person,chair,barrel"/>
+    <arg name="base_labels" default="person,chair,barrel,shed,fire hydrant,cone,vehicle"/>
 
     <arg name="viz" default="true"/>
     
