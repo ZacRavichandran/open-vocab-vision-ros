@@ -225,7 +225,6 @@ class DetectionNode:
         self.get_class_srv = rospy.Service("~get_labels", GetLabels, self.get_labels)
 
         self.setting_labels = False
-        self.set_predictor_labels()
 
         return weights
 

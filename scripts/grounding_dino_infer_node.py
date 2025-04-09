@@ -26,6 +26,7 @@ class DinoInferNode(DetectionNode):
             ckpt_path=Path(weights) / "groundingdino_swint_ogc.pth",
             config_path=Path(weights) / "GroundingDINO_SwinT_OGC.py",
         )
+        self.set_predictor_labels()
         rospy.loginfo(" loaded.")
         self.spin_node()
 
