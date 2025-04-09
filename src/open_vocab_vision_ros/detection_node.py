@@ -65,7 +65,7 @@ def decode_img_msg(msg: Union[ImageMsg, CompressedImgMsg]) -> np.ndarray:
                 np.ndarray(
                     shape=(msg.height, msg.width, 4), dtype=np.uint8, buffer=msg.data
                 )
-                )[:, :, :3]
+            )[:, :, :3]
             img = img[..., ::-1]  # swap r and b channels
         elif msg.encoding == "rgba8":
             img = np.copy(
@@ -221,13 +221,14 @@ class DetectionNode:
         self.marker_count = 1000  # deconflict from tracks
         self.max_marker_count = 2000
 
-        self.class_srv = rospy.Service("~set_labels", SetLabels, self.set_labels)
+        self.class_srv = rospy.Service("~set_labels", SetLabels, self.set_labels_cbk)
         self.get_class_srv = rospy.Service("~get_labels", GetLabels, self.get_labels)
 
         self.setting_labels = False
+        self.set_predictor_labels()
 
         return weights
-    
+
     def parse_labels(self, labels: str) -> List[str]:
         if labels != "":
             labels = labels.split(",")
@@ -237,7 +238,7 @@ class DetectionNode:
 
         return labels
 
-    def set_labels(self, req: SetLabelsRequest) -> SetLabelsResponse:
+    def set_labels_cbk(self, req: SetLabelsRequest) -> SetLabelsResponse:
         try:
             self.labels = [l.strip() for l in req.labels.split(",")]
             self.set_predictor_labels()
