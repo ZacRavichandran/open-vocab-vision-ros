@@ -7,7 +7,7 @@
     <arg name="drop" default="true"/>
     <arg name="confidence" default="0.4"/>
     <arg name="labels" default=""/>
-    <arg name="base_labels" default="person,chair,barrel,shed,fire hydrant,cone,vehicle"/>
+    <arg name="base_labels" default="person,barrel,shed,fire hydrant,cone,vehicle"/>
 
     <arg name="viz" default="true"/>
     
